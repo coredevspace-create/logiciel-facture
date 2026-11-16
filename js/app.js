@@ -1,5 +1,5 @@
 /*
- * FactuLocal — logiciel de devis et factures 100 % local.
+ * Ardoise — logiciel de devis et factures 100 % local.
  * Aucune dépendance, aucun serveur : les données sont enregistrées
  * dans le navigateur (localStorage) et peuvent être sauvegardées en fichier.
  */
@@ -8,7 +8,10 @@
 /* =====================================================================
    Constantes
    ===================================================================== */
-const STORE_KEY = 'factulocal_v1';
+// Pour renommer le logiciel, il suffit de modifier la ligne APP (et le logo dans index.html).
+const APP = { name: 'Ardoise', tagline: 'Devis & factures des commerces de proximité' };
+const STORE_KEY = 'ardoise_v1';
+const OLD_STORE_KEYS = ['factulocal_v1'];
 const VAT_RATES = [20, 10, 5.5, 2.1, 0];
 const UNITS = ['unité', 'pièce', 'kg', 'g', 'litre', 'bouteille', 'carton', 'lot', 'botte', 'bouquet', 'composition', 'heure', 'jour', 'forfait'];
 const PAYMENT_METHODS = ['Virement', 'Chèque', 'Espèces', 'Carte bancaire', 'Prélèvement', 'Autre'];
@@ -62,7 +65,12 @@ function migrate(d) {
 
 function load() {
   try {
-    const raw = localStorage.getItem(STORE_KEY);
+    let raw = localStorage.getItem(STORE_KEY);
+    if (!raw) {
+      // reprise des données d'une version précédente
+      const old = OLD_STORE_KEYS.map((k) => localStorage.getItem(k)).find(Boolean);
+      if (old) { raw = old; localStorage.setItem(STORE_KEY, old); }
+    }
     DB = raw ? migrate(JSON.parse(raw)) : defaultData();
   } catch (e) {
     storageBroken = true;
@@ -709,6 +717,8 @@ function renderEditor(isNew) {
         <label>Date ${isQuote ? 'du devis' : (d.kind === 'credit' ? "de l'avoir" : 'de facture')} <input id="f-date" type="date" value="${d.date}"></label>
         <label>${isQuote ? "Valable jusqu'au" : "Date d'échéance"} <input id="f-due" type="date" value="${d.dueDate || ''}">
           ${isQuote ? '' : '<div class="hint">Même date que la facture = paiement à réception.</div>'}</label>
+        ${isQuote ? '' : `<label>Date de livraison / prestation <input id="f-delivery-date" type="date" value="${d.deliveryDate || d.date}">
+          <div class="hint">Si différente de la date ${d.kind === 'credit' ? "de l'avoir" : 'de facture'}.</div></label>`}
         <label>Nature de l'opération
           <select id="f-op">${Object.entries(OPERATION_LABEL).map(([k, l]) => `<option value="${k}" ${d.operation === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
         </label>
@@ -827,6 +837,8 @@ function readHeader() {
   d.dueDate = $('#f-due').value || d.date;
   d.operation = $('#f-op').value;
   d.deliveryAddress = $('#f-delivery').value.trim();
+  const dd = $('#f-delivery-date');
+  d.deliveryDate = dd && dd.value && dd.value !== d.date ? dd.value : '';
   d.notes = $('#f-notes').value;
 }
 
@@ -852,8 +864,15 @@ function validateDraft() {
     toast("Complétez d'abord « Mon entreprise » (nom, adresse, SIRET) : ces mentions sont obligatoires sur une facture.", 'error');
     return;
   }
+  if (s.vatRegime !== 'franchise' && !s.tvaIntra) {
+    toast("Renseignez votre numéro de TVA intracommunautaire dans « Mon entreprise » : il est obligatoire sur vos factures.", 'error');
+    return;
+  }
   readHeader();
   const d = draft;
+  const cl = clientById(d.clientId);
+  if (cl && cl.type === 'pro' && !/^\d{9}$/.test(cl.siren || '') &&
+      !confirm(`Le SIREN du client « ${cl.name} » n'est pas renseigné.\n\nIl est obligatoire sur les factures entre professionnels et indispensable pour la facture électronique (Factur-X).\n\nValider quand même ?`)) return;
   const last = DB.documents
     .filter((x) => x.kind === d.kind && x.status === 'issued' && x.id !== d.id)
     .reduce((m, x) => (x.date > m ? x.date : m), '');
@@ -901,7 +920,8 @@ function renderView(id) {
       <div class="actions">
         <a class="btn" href="#/${isQuote ? 'devis' : 'factures'}">← Retour</a>
         ${isEditable(d) ? `<a class="btn" href="#/modifier/${d.id}">✎ Modifier</a>` : ''}
-        <button class="btn primary" data-act="print">⎙ Imprimer / PDF</button>
+        <button class="btn primary" data-act="pdf">⬇ ${isFacturX(d) ? 'PDF Factur-X' : 'Télécharger le PDF'}</button>
+        <button class="btn" data-act="print">⎙ Imprimer</button>
         <button class="btn" data-act="email">✉ Envoyer par e-mail</button>
       </div>
     </div>
@@ -918,6 +938,8 @@ function renderView(id) {
               <li><span class="muted">Reste dû</span><span class="${rem > 0 ? 'down' : 'up'} strong">${money(Math.max(0, rem))}</span></li>` : ''}
           </ul>
         </div>
+
+        ${isFacturX(d) ? facturxCard(d) : ''}
 
         ${isQuote ? `<div class="card"><h3>Suivi du devis</h3>
           ${toInvoice ? `<p class="small">Transformé en <a href="#/doc/${toInvoice.id}">${esc(toInvoice.number || 'facture brouillon')}</a>.</p>` : ''}
@@ -949,6 +971,8 @@ function renderView(id) {
     </div>`;
 
   actions = {
+    pdf: () => downloadPdf(d),
+    xml: () => downloadXml(d),
     print: () => printDoc(d),
     email: () => emailDoc(d),
     'to-invoice': () => quoteToInvoice(d),
@@ -976,6 +1000,17 @@ function renderView(id) {
       go(isQuote ? '#/devis' : '#/factures');
     },
   };
+}
+
+function facturxCard(d) {
+  const issues = facturxIssues(d);
+  return `<div class="card"><h3>Facture électronique</h3>
+    ${issues.length
+      ? `<p class="small" style="color:var(--warn)">⚠ Informations à compléter pour la plateforme agréée :</p><ul>${issues.map((i) => `<li class="small" style="display:block">• ${esc(i)}</li>`).join('')}</ul>`
+      : '<p class="small"><span class="up">✔ Format Factur-X (EN 16931)</span><br><span class="muted">Le PDF contient les données structurées de la facture : il peut être déposé tel quel sur votre plateforme agréée.</span></p>'}
+    <button class="btn" data-act="pdf">⬇ PDF Factur-X</button>
+    <button class="btn" data-act="xml">⬇ XML seul (CII)</button>
+  </div>`;
 }
 
 function renderPaper(d) {
@@ -1041,6 +1076,7 @@ function renderPaper(d) {
       ${ref ? `<div><b>Avoir sur la facture n° ${esc(ref.number)} du ${fmtDate(ref.date)}</b></div>` : ''}
       ${d.subject ? `<div>Objet : <b>${esc(d.subject)}</b></div>` : ''}
       <div>Opération : ${OPERATION_LABEL[d.operation] || OPERATION_LABEL.biens}</div>
+      ${d.deliveryDate && d.deliveryDate !== d.date ? `<div>Date de livraison / prestation : ${fmtDate(d.deliveryDate)}</div>` : ''}
       ${d.deliveryAddress ? `<div>Adresse de livraison : ${esc(d.deliveryAddress)}</div>` : ''}
     </div>
 
@@ -1093,7 +1129,7 @@ function emailDoc(d) {
   const subject = `${KIND_LABEL[d.kind]} ${d.number || ''} - ${S.name}`.trim();
   const body = `Bonjour${c.contact ? ' ' + c.contact : ''},\n\nVeuillez trouver ci-joint ${d.kind === 'invoice' ? 'notre facture' : d.kind === 'quote' ? 'notre devis' : 'notre avoir'} n° ${d.number || ''} d'un montant de ${money(t.ttc)}${d.kind === 'invoice' && d.dueDate && d.dueDate !== d.date ? `, à régler avant le ${fmtDate(d.dueDate)}` : ''}.\n\n${d.kind === 'quote' ? "N'hésitez pas à revenir vers nous pour toute question.\n\n" : ''}Cordialement,\n${S.name}${S.phone ? '\n' + S.phone : ''}`;
   openModal(`Envoyer le ${label} par e-mail`, `
-    <div class="alert-box info"><b>Étape 1 :</b> cliquez sur « Télécharger le PDF » et choisissez « Enregistrer au format PDF ».<br>
+    <div class="alert-box info"><b>Étape 1 :</b> cliquez sur « Télécharger le PDF » (il arrive dans votre dossier Téléchargements).<br>
     <b>Étape 2 :</b> cliquez sur « Ouvrir ma messagerie » puis <b>joignez le PDF</b> au message.</div>
     <label>Destinataire <input id="m-to" value="${esc(c.email || '')}" placeholder="adresse e-mail du client"></label>
     <label style="margin-top:10px">Objet <input id="m-subject" value="${esc(subject)}"></label>
@@ -1103,7 +1139,7 @@ function emailDoc(d) {
       <button class="btn" id="m-copy">Copier le message</button>
       <button class="btn primary" id="m-open">✉ Ouvrir ma messagerie</button>
     </div>`, (root) => {
-    $('#m-pdf', root).onclick = () => printDoc(d);
+    $('#m-pdf', root).onclick = () => (pdfReady() ? downloadPdf(d) : printDoc(d));
     $('#m-copy', root).onclick = () => copyText($('#m-body', root).value);
     $('#m-open', root).onclick = () => {
       const href = `mailto:${$('#m-to', root).value.trim()}?subject=${encodeURIComponent($('#m-subject', root).value)}&body=${encodeURIComponent($('#m-body', root).value)}`;
@@ -1587,7 +1623,7 @@ function renderBackup() {
 function exportBackup() {
   DB.lastBackup = new Date().toISOString();
   save();
-  download(`factulocal-sauvegarde-${today()}.json`, JSON.stringify(DB, null, 1), 'application/json');
+  download(`${APP.name.toLowerCase()}-sauvegarde-${today()}.json`, JSON.stringify(DB, null, 1), 'application/json');
   toast('Sauvegarde téléchargée. Copiez-la sur une clé USB !');
   renderBanner();
 }
@@ -1710,6 +1746,8 @@ function loadDemo() {
    Démarrage
    ===================================================================== */
 load();
+document.title = `${APP.name} — ${APP.tagline}`;
+$$('.brand-name').forEach((el) => { el.textContent = APP.name; });
 window.addEventListener('hashchange', router);
 window.addEventListener('storage', (e) => { if (e.key === STORE_KEY) { load(); router(); } });
 router();

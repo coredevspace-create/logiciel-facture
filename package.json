@@ -1,0 +1,9 @@
+{
+  "name": "ardoise",
+  "version": "1.0.0",
+  "description": "Ardoise — logiciel de devis et factures 100 % local, compatible Factur-X, pour les commerces de proximité",
+  "private": true,
+  "scripts": {
+    "build": "node build.js"
+  }
+}

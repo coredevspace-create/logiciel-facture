@@ -41,10 +41,7 @@ a { color: #5b8def; }
   background: var(--bg); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20;
 }
 .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; flex-shrink: 0; }
-.brand-logo {
-  width: 28px; height: 28px; border-radius: 6px; background: var(--text-strong); color: var(--bg);
-  display: grid; place-items: center; font-weight: 800; font-size: 16px;
-}
+.brand-logo { width: 30px; height: 30px; display: block; flex-shrink: 0; }
 .brand-name { font-weight: 700; font-size: 17px; color: var(--text-strong); letter-spacing: -.01em; }
 #nav { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
 #nav::-webkit-scrollbar { display: none; }
