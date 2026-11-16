@@ -101,6 +101,33 @@
     .float.f2 { right: -6px; top: 58%; }
     .up { color: #22c39a; } .down { color: var(--red); }
 
+    /* ---------- Comparaison avant / après ---------- */
+    .ba-hint { position: relative; display: flex; justify-content: center; gap: 10px; align-items: center; color: #a9aebb; font-size: 14.5px; margin: 0 0 14px; }
+    .ba-hint b { color: var(--strong); }
+    .ba { position: relative; aspect-ratio: 2720 / 1640; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: pan-y; cursor: ew-resize; --pos: 50%; background: var(--bg-2); }
+    .ba > img, .ba-before > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+    .ba-before { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--pos)) 0 0); z-index: 1; }
+    .ba-before::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,12,18,.35), rgba(10,12,18,.05) 70%); }
+    .pains { position: absolute; left: 3.5%; bottom: 9%; display: grid; gap: 9px; z-index: 2; }
+    .pain {
+      width: max-content; max-width: 340px; display: flex; gap: 9px; align-items: center; padding: 9px 13px; border-radius: 10px;
+      background: rgba(19, 23, 34, .9); border: 1px solid rgba(242, 54, 69, .55); color: #fff; font-size: 14.5px; font-weight: 600;
+      box-shadow: 0 10px 26px rgba(0,0,0,.45);
+    }
+    .ba-line { position: absolute; top: 0; bottom: 0; left: var(--pos); width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 22px rgba(41, 98, 255, .9); z-index: 3; pointer-events: none; }
+    .ba-knob {
+      position: absolute; top: 50%; left: var(--pos); width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; z-index: 4; pointer-events: none;
+      background: var(--blue); border: 3px solid #fff; display: grid; place-items: center; color: #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,.55), 0 0 0 7px rgba(41, 98, 255, .28); transition: transform .15s;
+    }
+    .ba.dragging .ba-knob { transform: scale(1.1); }
+    .ba-knob svg { width: 26px; height: 26px; }
+    .ba-tag { position: absolute; top: 16px; z-index: 4; padding: 7px 14px; border-radius: 20px; font-size: 13.5px; font-weight: 700; color: #fff; pointer-events: none; transition: opacity .2s; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+    .ba-tag.before { left: 16px; background: rgba(242, 54, 69, .92); }
+    .ba-tag.after { right: 16px; background: rgba(8, 153, 129, .95); }
+    .ba-range { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .ba:has(.ba-range:focus-visible) .ba-knob { outline: 3px solid #9db8ff; outline-offset: 4px; }
+
     /* ---------- Bandeau défilant ---------- */
     .ticker { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg-2); overflow: hidden; margin-top: 10px; }
     .ticker-track { display: flex; gap: 46px; padding: 16px 0; width: max-content; animation: scroll 38s linear infinite; }
@@ -243,6 +270,7 @@
       .feature, .feature.rev { grid-template-columns: 1fr; gap: 34px; margin-top: 70px; }
       .feature.rev .f-text { order: 0; }
       .float { display: none; }
+      .pain { font-size: 12.5px; padding: 7px 10px; }
       .bento { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 190px; grid-template-areas: "f f" "f f" "b c" "bo c" "fr ca" "t t"; }
       .combo { padding: 0 14px 36px 0; }
       section.block { padding: 80px 0; }
@@ -258,6 +286,14 @@
       .stat { padding: 22px 18px; }
       .stat .v { font-size: 32px; }
       .hero-cta .btn { width: 100%; }
+      .pains { gap: 6px; bottom: 6%; }
+      .pain { font-size: 10.5px; padding: 5px 8px; border-radius: 8px; }
+      .pain:nth-child(3) { display: none; }
+      .ba-hint-more { display: none; }
+      .ba-knob { width: 40px; height: 40px; margin: -20px 0 0 -20px; }
+      .ba-knob svg { width: 20px; height: 20px; }
+      .ba-tag { top: 10px; font-size: 11.5px; padding: 5px 10px; }
+      .ba-tag.before { left: 10px; } .ba-tag.after { right: 10px; }
       .bento { grid-auto-rows: 150px; gap: 10px; }
       .tile figcaption { font-size: 15px; padding: 36px 12px 10px; }
       .tile figcaption span { font-size: 12px; }
@@ -304,11 +340,26 @@
       <div class="trust"><span>Payé une fois, sans abonnement</span><span>Fonctionne sans Internet</span><span>Vos données restent chez vous</span></div>
     </div>
     <div class="hero-shot">
+      <p class="ba-hint"><span aria-hidden="true">⟷</span> Faites glisser pour comparer<span class="ba-hint-more"> : <b>avant</b> / <b>avec Ardoise</b></span></p>
       <div class="frame">
         <div class="bar"><i></i><i></i><i></i></div>
-        <img src="marketing/img/tableau-de-bord.png" alt="Tableau de bord d'Ardoise : chiffre d'affaires, encaissements, factures en retard" width="2720" height="1640">
+        <div class="ba" id="ba">
+          <img src="marketing/img/tableau-de-bord.png" alt="Avec Ardoise : tableau de bord clair avec chiffre d'affaires, encaissements et factures en retard" width="2720" height="1640">
+          <div class="ba-before">
+            <img src="images/photos/avant.webp" alt="Avant : bureau encombré de factures papier, carnet à souches, calculatrice et tableur" width="1600" height="965">
+            <div class="pains" aria-hidden="true">
+              <div class="pain">😩 Factures refaites à la main sur Excel</div>
+              <div class="pain">❓ Qui ne m'a pas encore payé ?</div>
+              <div class="pain">⚠️ Pas prêt pour la facture électronique</div>
+            </div>
+          </div>
+          <span class="ba-tag before">Avant</span>
+          <span class="ba-tag after">Avec Ardoise</span>
+          <div class="ba-line"></div>
+          <input class="ba-range" type="range" min="0" max="100" step="1" value="50" aria-label="Comparer avant et après Ardoise">
+          <div class="ba-knob" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 3 12 9 18"/><polyline points="15 6 21 12 15 18"/></svg></div>
+        </div>
       </div>
-      <div class="float f1"><small>Encaissé ce mois</small><strong class="up">+ 482,80 €</strong></div>
       <div class="float f2"><small>Factures en retard</small><strong class="down">2 à relancer</strong></div>
       <div class="fade"></div>
     </div>
@@ -600,6 +651,59 @@
     document.querySelectorAll('[data-contact-tel]').forEach((a) => { a.href = 'tel:' + CONTACT.telephone.replace(/\s/g, ''); a.textContent = CONTACT.telephone; });
     document.querySelectorAll('[data-contact-name]').forEach((s) => { s.textContent = CONTACT.nom; });
     document.getElementById('year').textContent = new Date().getFullYear();
+
+    // ===== Comparaison avant / après =====
+    (() => {
+      const ba = document.getElementById('ba');
+      if (!ba) return;
+      const range = ba.querySelector('.ba-range');
+      const tagBefore = ba.querySelector('.ba-tag.before');
+      const tagAfter = ba.querySelector('.ba-tag.after');
+      let introDone = false, raf = 0, dragging = false;
+
+      const set = (v) => {
+        v = Math.max(0, Math.min(100, v));
+        ba.style.setProperty('--pos', v + '%');
+        range.value = Math.round(v);
+        range.setAttribute('aria-valuetext', `${Math.round(v)} % avant, ${100 - Math.round(v)} % avec Ardoise`);
+        tagBefore.style.opacity = v < 14 ? 0 : 1;
+        tagAfter.style.opacity = v > 86 ? 0 : 1;
+      };
+      const stopIntro = () => { introDone = true; cancelAnimationFrame(raf); };
+      const fromX = (x) => { const r = ba.getBoundingClientRect(); return ((x - r.left) / r.width) * 100; };
+
+      ba.addEventListener('pointerdown', (e) => {
+        dragging = true; stopIntro(); ba.classList.add('dragging');
+        ba.setPointerCapture(e.pointerId); set(fromX(e.clientX));
+      });
+      ba.addEventListener('pointermove', (e) => { if (dragging) set(fromX(e.clientX)); });
+      ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => ba.addEventListener(t, () => { dragging = false; ba.classList.remove('dragging'); }));
+      range.addEventListener('input', () => { stopIntro(); set(+range.value); });
+
+      // Petit balayage d'introduction quand la comparaison apparaît à l'écran
+      const intro = () => {
+        if (introDone || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const keys = [[0, 50], [900, 80], [1900, 22], [2700, 50]];
+        const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+        const t0 = performance.now();
+        const step = (now) => {
+          if (introDone) return;
+          const t = now - t0;
+          let i = keys.findIndex((k) => k[0] > t);
+          if (i === -1) { set(50); introDone = true; return; }
+          const [ta, va] = keys[i - 1], [tb, vb] = keys[i];
+          set(va + (vb - va) * ease((t - ta) / (tb - ta)));
+          raf = requestAnimationFrame(step);
+        };
+        raf = requestAnimationFrame(step);
+      };
+      set(50);
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver((entries, obs) => {
+          if (entries[0].isIntersecting) { setTimeout(intro, 600); obs.disconnect(); }
+        }, { threshold: 0.45 }).observe(ba);
+      }
+    })();
   </script>
 </body>
 </html>
