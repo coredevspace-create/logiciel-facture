@@ -3,58 +3,543 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ardoise — Devis &amp; factures</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232962ff'/%3E%3Crect x='10' y='14' width='44' height='32' rx='5' fill='%23131722' stroke='%23fff' stroke-width='3'/%3E%3Cpolyline points='17,38 25,30 31,34 41,23' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='35.5,22.5 41.5,22.5 41.5,28.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='22' y='50' width='20' height='3.5' rx='1.75' fill='%23fff'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/style.css">
+  <title>Ardoise — Devis et factures pour les commerces de proximité</title>
+  <meta name="description" content="Ardoise : le logiciel de devis et factures des commerçants et producteurs. Factures en 2 minutes, relances des impayés, format Factur-X prêt pour la facture électronique 2027. Payé une fois, sans abonnement.">
+  <meta property="og:title" content="Ardoise — Vos devis et factures en 2 minutes">
+  <meta property="og:description" content="Le logiciel simple des commerces de proximité, prêt pour la facture électronique 2027.">
+  <meta property="og:image" content="marketing/img/tableau-de-bord.png">
+  <meta property="og:locale" content="fr_FR">
+  <meta name="theme-color" content="#131722">
+  <link rel="icon" type="image/svg+xml" href="images/logo.svg">
+  <style>
+    :root {
+      --bg: #0f121a;
+      --bg-2: #131722;
+      --panel: #1e222d;
+      --panel-2: #252a37;
+      --border: #2a2e39;
+      --text: #d1d4dc;
+      --strong: #ffffff;
+      --muted: #868b98;
+      --blue: #2962ff;
+      --blue-2: #5b8def;
+      --green: #089981;
+      --red: #f23645;
+      --orange: #ff9800;
+      --radius: 12px;
+      --max: 1180px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Trebuchet MS", "Segoe UI", Roboto, Ubuntu, sans-serif;
+      font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; height: auto; display: block; }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 13px 22px; border-radius: 10px; font-weight: 600; font-size: 15.5px;
+      border: 1px solid transparent; cursor: pointer; transition: background .15s, border-color .15s, transform .15s;
+      white-space: nowrap;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: #1e53e5; }
+    .btn-ghost { border-color: #3a3f4c; color: var(--strong); background: rgba(255,255,255,.03); }
+    .btn-ghost:hover { border-color: #5a6070; background: rgba(255,255,255,.06); }
+    .btn-sm { padding: 9px 15px; font-size: 14px; }
+
+    /* ---------- Navigation ---------- */
+    .nav { position: sticky; top: 0; z-index: 20; background: rgba(15, 18, 26, .82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(42, 46, 57, .7); }
+    .nav .wrap { display: flex; align-items: center; height: 64px; gap: 28px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; color: var(--strong); letter-spacing: -.01em; }
+    .brand svg { width: 32px; height: 32px; }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-links a { color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: 15px; font-weight: 500; }
+    .nav-links a:hover { background: var(--panel); color: var(--strong); }
+    .nav-cta { margin-left: auto; display: flex; gap: 8px; }
+
+    /* ---------- Hero ---------- */
+    .hero { position: relative; padding: 88px 0 0; text-align: center; overflow: hidden; }
+    .hero::before {
+      content: ""; position: absolute; left: 50%; top: -220px; width: 1100px; height: 700px; transform: translateX(-50%);
+      background: radial-gradient(closest-side, rgba(41, 98, 255, .32), rgba(41, 98, 255, 0) 70%); pointer-events: none;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 8px; border-radius: 30px;
+      background: rgba(8, 153, 129, .12); border: 1px solid rgba(8, 153, 129, .35); color: #4fd1b4; font-size: 14px; font-weight: 600;
+      position: relative;
+    }
+    .pill b { background: var(--green); color: #fff; border-radius: 20px; padding: 2px 9px; font-size: 12px; }
+    .hero h1 {
+      position: relative; font-size: clamp(38px, 6.4vw, 74px); line-height: 1.04; letter-spacing: -.035em;
+      color: var(--strong); margin: 22px auto 22px; max-width: 900px; font-weight: 800;
+    }
+    .hero h1 .grad { background: linear-gradient(90deg, #5b8def, #2962ff 45%, #7c4dff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero p.lead { position: relative; font-size: clamp(17px, 2vw, 20px); color: #a9aebb; max-width: 700px; margin: 0 auto 34px; }
+    .hero-cta { position: relative; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .trust { position: relative; display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; margin-top: 22px; color: var(--muted); font-size: 14.5px; }
+    .trust span::before { content: "✓"; color: var(--green); font-weight: 700; margin-right: 7px; }
+    .hero-shot { position: relative; margin: 60px auto 0; max-width: 1080px; padding: 0 24px; }
+    .hero-shot .frame {
+      border-radius: 14px; border: 1px solid #343a48; overflow: hidden; background: var(--bg-2);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.02), 0 40px 120px rgba(41, 98, 255, .22), 0 30px 60px rgba(0,0,0,.6);
+    }
+    .hero-shot .bar { height: 30px; background: #1a1e28; display: flex; align-items: center; gap: 7px; padding: 0 12px; border-bottom: 1px solid var(--border); }
+    .hero-shot .bar i { width: 10px; height: 10px; border-radius: 50%; background: #3a3f4c; }
+    .hero-shot .fade { position: absolute; left: 0; right: 0; bottom: 0; height: 160px; background: linear-gradient(180deg, rgba(15,18,26,0), var(--bg)); pointer-events: none; }
+    .float {
+      position: absolute; background: rgba(30, 34, 45, .92); border: 1px solid #3a3f4c; border-radius: 12px; padding: 12px 16px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.5); text-align: left; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .float small { display: block; color: var(--muted); font-size: 12px; }
+    .float strong { color: var(--strong); font-size: 20px; letter-spacing: -.01em; }
+    .float.f1 { left: -6px; top: 76%; }
+    .float.f2 { right: -6px; top: 58%; }
+    .up { color: #22c39a; } .down { color: var(--red); }
+
+    /* ---------- Bandeau défilant ---------- */
+    .ticker { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg-2); overflow: hidden; margin-top: 10px; }
+    .ticker-track { display: flex; gap: 46px; padding: 16px 0; width: max-content; animation: scroll 38s linear infinite; }
+    .ticker-track span { color: #9ca1ad; font-size: 15px; white-space: nowrap; display: flex; gap: 10px; align-items: center; }
+    .ticker-track span b { color: var(--strong); font-weight: 600; }
+    @keyframes scroll { to { transform: translateX(-50%); } }
+    @media (prefers-reduced-motion: reduce) { .ticker-track { animation: none; } }
+
+    /* ---------- Sections ---------- */
+    section.block { padding: 110px 0; }
+    .eyebrow { color: var(--blue-2); font-weight: 700; font-size: 13.5px; text-transform: uppercase; letter-spacing: .1em; }
+    h2.title { font-size: clamp(30px, 4.2vw, 48px); line-height: 1.1; letter-spacing: -.03em; color: var(--strong); margin: 12px 0 16px; font-weight: 800; }
+    p.sub { color: #a1a6b3; font-size: 18px; max-width: 660px; margin: 0; }
+    .center { text-align: center; }
+    .center p.sub { margin: 0 auto; }
+
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 56px; }
+    .stat { background: var(--bg-2); padding: 28px 24px; }
+    .stat .v { font-size: 40px; font-weight: 800; color: var(--strong); letter-spacing: -.03em; line-height: 1; }
+    .stat .l { color: var(--muted); font-size: 14.5px; margin-top: 10px; }
+
+    .cards3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 56px; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
+    .card .ico { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; margin-bottom: 18px; }
+    .card h3 { color: var(--strong); font-size: 20px; margin: 0 0 10px; letter-spacing: -.01em; }
+    .card p { margin: 0; color: #a1a6b3; font-size: 15.5px; }
+
+    .feature { display: grid; grid-template-columns: 1fr 1.25fr; gap: 64px; align-items: center; margin-top: 90px; }
+    .feature.rev { grid-template-columns: 1.25fr 1fr; }
+    .feature.rev .f-text { order: 2; }
+    .f-text h3 { color: var(--strong); font-size: clamp(24px, 3vw, 32px); letter-spacing: -.02em; margin: 10px 0 14px; line-height: 1.15; }
+    .f-text p { color: #a1a6b3; margin: 0 0 18px; font-size: 17px; }
+    .checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    .checks li { display: flex; gap: 10px; color: var(--text); font-size: 15.5px; }
+    .checks li::before { content: ""; flex: 0 0 20px; height: 20px; margin-top: 2px; border-radius: 6px; background: rgba(41,98,255,.18) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5 10.5l3 3 7-7' fill='none' stroke='%235b8def' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat; }
+    .shot { border-radius: 12px; border: 1px solid #343a48; overflow: hidden; box-shadow: 0 30px 70px rgba(0,0,0,.55); background: var(--bg-2); }
+    .shot.paper { background: #fff; border-color: #2a2e39; }
+    .phone { max-width: 300px; margin: 0 auto; border-radius: 34px; border: 8px solid #262b37; overflow: hidden; box-shadow: 0 30px 70px rgba(0,0,0,.55); }
+
+    /* ---------- Réforme ---------- */
+    .reform { background: linear-gradient(180deg, var(--bg), var(--bg-2)); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .timeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 56px; position: relative; }
+    .tl { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; position: relative; }
+    .tl .date { font-weight: 800; color: var(--strong); font-size: 22px; letter-spacing: -.01em; }
+    .tl .tag { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 20px; margin-bottom: 14px; }
+    .tl p { margin: 8px 0 0; color: #a1a6b3; font-size: 15.5px; }
+    .tl.now { border-color: rgba(41, 98, 255, .6); box-shadow: 0 0 0 1px rgba(41,98,255,.25), 0 20px 50px rgba(41,98,255,.15); }
+    .validated { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .validated span { border: 1px solid rgba(8,153,129,.4); background: rgba(8,153,129,.1); color: #4fd1b4; border-radius: 30px; padding: 7px 14px; font-size: 14px; font-weight: 600; }
+
+    /* ---------- Métiers ---------- */
+    .trades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 50px; }
+    .trade { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
+    .trade .e { font-size: 28px; }
+    .trade b { display: block; color: var(--strong); margin: 10px 0 4px; font-size: 17px; }
+    .trade span { color: var(--muted); font-size: 14px; }
+
+    /* ---------- Tarifs ---------- */
+    .prices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 56px; align-items: stretch; }
+    .price { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 30px; display: flex; flex-direction: column; position: relative; }
+    .price.best { border-color: var(--blue); background: linear-gradient(180deg, rgba(41,98,255,.12), var(--panel) 45%); box-shadow: 0 30px 80px rgba(41,98,255,.18); }
+    .price .badge { position: absolute; top: -13px; left: 30px; background: var(--blue); color: #fff; font-size: 12.5px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+    .price h3 { color: var(--strong); margin: 0; font-size: 19px; }
+    .price .desc { color: var(--muted); font-size: 14.5px; margin: 6px 0 20px; min-height: 44px; }
+    .price .amount { font-size: 48px; font-weight: 800; color: var(--strong); letter-spacing: -.03em; line-height: 1; }
+    .price .amount small { font-size: 16px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+    .price .checks { margin: 24px 0 28px; }
+    .price .btn { margin-top: auto; }
+    .note { color: var(--muted); font-size: 14px; margin-top: 22px; text-align: center; }
+
+    /* ---------- FAQ ---------- */
+    .faq { max-width: 820px; margin: 50px auto 0; }
+    details { border-bottom: 1px solid var(--border); padding: 4px 0; }
+    summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 16px; padding: 20px 0; color: var(--strong); font-size: 18px; font-weight: 600; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; color: var(--muted); font-size: 24px; line-height: 1; transition: transform .2s; }
+    details[open] summary::after { transform: rotate(45deg); }
+    details p { margin: 0 0 22px; color: #a1a6b3; font-size: 16px; }
+
+    /* ---------- CTA final ---------- */
+    .final { text-align: center; padding: 100px 0 110px; position: relative; overflow: hidden; }
+    .final::before { content: ""; position: absolute; left: 50%; top: 50%; width: 900px; height: 500px; transform: translate(-50%, -50%); background: radial-gradient(closest-side, rgba(41,98,255,.25), rgba(41,98,255,0)); pointer-events: none; }
+    .final > * { position: relative; }
+    .contact-line { margin-top: 26px; color: var(--muted); font-size: 15.5px; }
+    .contact-line a { color: var(--strong); font-weight: 600; }
+
+    footer { border-top: 1px solid var(--border); padding: 34px 0 44px; color: var(--muted); font-size: 14px; }
+    footer .wrap { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    footer a:hover { color: var(--strong); }
+    .foot-links { display: flex; gap: 20px; flex-wrap: wrap; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 960px) {
+      .nav-links { display: none; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .cards3, .timeline, .prices { grid-template-columns: 1fr; }
+      .trades { grid-template-columns: repeat(2, 1fr); }
+      .feature, .feature.rev { grid-template-columns: 1fr; gap: 34px; margin-top: 70px; }
+      .feature.rev .f-text { order: 0; }
+      .float { display: none; }
+      section.block { padding: 80px 0; }
+      .price .desc { min-height: 0; }
+    }
+    @media (max-width: 560px) {
+      .wrap { padding: 0 16px; }
+      .hero { padding-top: 56px; }
+      .hero-shot { padding: 0 16px; margin-top: 40px; }
+      .nav-cta .btn-ghost { display: none; }
+      .trades { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .trade { padding: 16px; }
+      .stat { padding: 22px 18px; }
+      .stat .v { font-size: 32px; }
+      .hero-cta .btn { width: 100%; }
+    }
+  </style>
 </head>
 <body>
-  <header class="topbar no-print">
-    <a class="brand" href="#/tableau">
-      <svg class="brand-logo" viewBox="0 0 64 64" aria-hidden="true">
-        <rect width="64" height="64" rx="14" fill="#2962ff"/>
-        <rect x="10" y="14" width="44" height="32" rx="5" fill="#131722" stroke="#fff" stroke-width="3"/>
-        <polyline points="17,38 25,30 31,34 41,23" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-        <polyline points="35.5,22.5 41.5,22.5 41.5,28.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-        <rect x="22" y="50" width="20" height="3.5" rx="1.75" fill="#fff" opacity=".85"/>
-      </svg>
-      <span class="brand-name">Ardoise</span>
-    </a>
-    <nav id="nav">
-      <a href="#/tableau" data-route="tableau">Tableau de bord</a>
-      <a href="#/devis" data-route="devis">Devis</a>
-      <a href="#/factures" data-route="factures">Factures</a>
-      <a href="#/clients" data-route="clients">Clients</a>
-      <a href="#/catalogue" data-route="catalogue">Catalogue</a>
-      <a href="#/parametres" data-route="parametres">Mon entreprise</a>
-      <a href="#/sauvegarde" data-route="sauvegarde">Sauvegarde</a>
-    </nav>
-    <div class="topbar-right">
-      <a class="btn primary small" href="#/nouveau/invoice">+ Facture</a>
-      <a class="btn small" href="#/nouveau/quote">+ Devis</a>
+
+  <!-- Navigation -->
+  <header class="nav">
+    <div class="wrap">
+      <a class="brand" href="#">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#2962ff"/><rect x="10" y="14" width="44" height="32" rx="5" fill="#131722" stroke="#fff" stroke-width="3"/><polyline points="17,38 25,30 31,34 41,23" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="35.5,22.5 41.5,22.5 41.5,28.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="22" y="50" width="20" height="3.5" rx="1.75" fill="#fff" opacity=".85"/></svg>
+        Ardoise
+      </a>
+      <nav class="nav-links">
+        <a href="#fonctionnalites">Fonctionnalités</a>
+        <a href="#reforme">Facture électronique</a>
+        <a href="#tarifs">Tarifs</a>
+        <a href="#faq">Questions</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="btn btn-ghost btn-sm" data-contact-mail href="#contact">Être rappelé</a>
+        <a class="btn btn-primary btn-sm" href="app.html?demo=1">Essayer la démo</a>
+      </div>
     </div>
   </header>
 
-  <div id="ticker" class="ticker no-print"></div>
-  <div id="banner" class="no-print"></div>
-  <main id="main"></main>
-
-  <div id="modal" class="modal no-print" hidden>
-    <div class="modal-box">
-      <div class="modal-head">
-        <h2 id="modal-title"></h2>
-        <button class="icon-btn" data-close aria-label="Fermer">✕</button>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="wrap">
+      <span class="pill"><b>2027</b> Prêt pour la facture électronique obligatoire</span>
+      <h1>Vos devis et factures<br>en <span class="grad">2 minutes</span>.</h1>
+      <p class="lead">Le logiciel simple des commerçants et producteurs du coin. Vous facturez en quelques clics, vous voyez qui vous doit de l'argent, et vos factures sont déjà au format officiel.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="app.html?demo=1">Essayer la démo gratuite →</a>
+        <a class="btn btn-ghost" href="#contact">Demander une démonstration</a>
       </div>
-      <div id="modal-body"></div>
+      <div class="trust"><span>Payé une fois, sans abonnement</span><span>Fonctionne sans Internet</span><span>Vos données restent chez vous</span></div>
+    </div>
+    <div class="hero-shot">
+      <div class="frame">
+        <div class="bar"><i></i><i></i><i></i></div>
+        <img src="marketing/img/tableau-de-bord.png" alt="Tableau de bord d'Ardoise : chiffre d'affaires, encaissements, factures en retard" width="2720" height="1640">
+      </div>
+      <div class="float f1"><small>Encaissé ce mois</small><strong class="up">+ 482,80 €</strong></div>
+      <div class="float f2"><small>Factures en retard</small><strong class="down">2 à relancer</strong></div>
+      <div class="fade"></div>
+    </div>
+  </section>
+
+  <!-- Bandeau métiers -->
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <span>🍎 <b>Cidreries</b> &amp; producteurs</span><span>💐 <b>Fleuristes</b></span><span>🥩 <b>Boucheries</b></span><span>🧀 <b>Épiceries fines</b></span><span>🍽 <b>Traiteurs</b></span><span>🥖 <b>Boulangeries</b></span><span>🍷 <b>Cavistes</b></span><span>🧺 <b>Marchés</b> &amp; artisans</span>
+      <span>🍎 <b>Cidreries</b> &amp; producteurs</span><span>💐 <b>Fleuristes</b></span><span>🥩 <b>Boucheries</b></span><span>🧀 <b>Épiceries fines</b></span><span>🍽 <b>Traiteurs</b></span><span>🥖 <b>Boulangeries</b></span><span>🍷 <b>Cavistes</b></span><span>🧺 <b>Marchés</b> &amp; artisans</span>
     </div>
   </div>
 
-  <div id="toasts" class="no-print"></div>
+  <!-- Bénéfices -->
+  <section class="block">
+    <div class="wrap">
+      <div class="center">
+        <div class="eyebrow">Moins de paperasse</div>
+        <h2 class="title">Fini les factures du dimanche soir</h2>
+        <p class="sub">Ardoise s'occupe de la partie pénible de la facturation, pour que vous puissiez vous occuper de votre commerce.</p>
+      </div>
+      <div class="cards3">
+        <div class="card">
+          <div class="ico" style="background:rgba(41,98,255,.16)">⏱</div>
+          <h3>Gagnez du temps</h3>
+          <p>Vos produits et vos clients sont enregistrés une fois pour toutes. Une facture se fait en quelques clics, un devis devient une facture en un seul.</p>
+        </div>
+        <div class="card">
+          <div class="ico" style="background:rgba(8,153,129,.16)">💶</div>
+          <h3>Soyez payé plus vite</h3>
+          <p>Les retards de paiement sautent aux yeux. Trois lettres de relance sont déjà rédigées, de la plus aimable à la plus ferme.</p>
+        </div>
+        <div class="card">
+          <div class="ico" style="background:rgba(242,54,69,.14)">✅</div>
+          <h3>Restez dans les règles</h3>
+          <p>Numérotation sans trou, mentions obligatoires ajoutées automatiquement, factures au format Factur-X exigé à partir de 2027.</p>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="v">2 min</div><div class="l">pour faire une facture complète</div></div>
+        <div class="stat"><div class="v">1 clic</div><div class="l">pour transformer un devis en facture</div></div>
+        <div class="stat"><div class="v">0 €</div><div class="l">d'abonnement obligatoire</div></div>
+        <div class="stat"><div class="v">100 %</div><div class="l">de vos données chez vous</div></div>
+      </div>
+    </div>
+  </section>
 
-  <!-- Génération PDF / Factur-X (bibliothèques locales, fonctionne sans Internet) -->
-  <script src="js/vendor/pdf-lib.min.js"></script>
-  <script src="js/vendor/fontkit.umd.min.js"></script>
-  <script src="js/vendor/assets.js"></script>
-  <script src="js/facturx.js"></script>
-  <script src="js/app.js"></script>
+  <!-- Fonctionnalités -->
+  <section class="block" id="fonctionnalites" style="padding-top:0">
+    <div class="wrap">
+      <div class="feature">
+        <div class="f-text">
+          <div class="eyebrow">Facturer</div>
+          <h3>Tapez le nom du produit, Ardoise fait le reste</h3>
+          <p>Votre catalogue est prêt avec vos prix et vos taux de TVA. Vous choisissez le client, ajoutez les articles, et les totaux se calculent tout seuls.</p>
+          <ul class="checks">
+            <li>Prix HT ou TTC, comme en boutique</li>
+            <li>TVA à 5,5 %, 10 % et 20 % sur la même facture</li>
+            <li>Prix au kilo, remises, frais de livraison</li>
+            <li>Micro-entreprise : « TVA non applicable » ajouté automatiquement</li>
+          </ul>
+        </div>
+        <div class="shot"><img src="marketing/img/saisie-facture.png" alt="Saisie d'une facture dans Ardoise" loading="lazy" width="2720" height="1640"></div>
+      </div>
+
+      <div class="feature rev">
+        <div class="f-text">
+          <div class="eyebrow">Envoyer</div>
+          <h3>Une facture professionnelle, avec votre logo</h3>
+          <p>Le PDF se télécharge en un clic, prêt à envoyer par e-mail. Toutes les mentions obligatoires y sont : vous n'avez plus à y penser.</p>
+          <ul class="checks">
+            <li>Numéro définitif et chronologique, comme l'exige la loi</li>
+            <li>Corrections par avoir, en un clic</li>
+            <li>Devis avec zone « Bon pour accord »</li>
+            <li>Message d'e-mail déjà rédigé</li>
+          </ul>
+        </div>
+        <div class="shot paper"><img src="marketing/img/facture-pdf.png" alt="Exemple de facture PDF générée par Ardoise" loading="lazy"></div>
+      </div>
+
+      <div class="feature">
+        <div class="f-text">
+          <div class="eyebrow">Encaisser</div>
+          <h3>Vous savez toujours qui vous doit quoi</h3>
+          <p>Le tableau de bord affiche votre chiffre d'affaires, ce qui reste à encaisser et, en rouge, les factures en retard. Une relance part en deux clics.</p>
+          <ul class="checks">
+            <li>Paiements partiels et reste dû calculé automatiquement</li>
+            <li>Trois niveaux de relance déjà rédigés</li>
+            <li>Export Excel pour le comptable, avec la TVA par taux</li>
+            <li>Utilisable aussi sur tablette et téléphone</li>
+          </ul>
+        </div>
+        <div><div class="phone"><img src="marketing/img/mobile.png" alt="Ardoise sur téléphone" loading="lazy"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Réforme -->
+  <section class="block reform" id="reforme">
+    <div class="wrap">
+      <div class="center">
+        <div class="eyebrow">Ce qui change pour vous</div>
+        <h2 class="title">La facture électronique devient obligatoire</h2>
+        <p class="sub">Bientôt, un PDF fait sur Word ou Excel ne suffira plus pour facturer un professionnel. Ardoise produit déjà vos factures au format officiel Factur-X.</p>
+      </div>
+      <div class="timeline">
+        <div class="tl">
+          <span class="tag" style="background:rgba(8,153,129,.15);color:#4fd1b4">En vigueur</span>
+          <div class="date">Septembre 2026</div>
+          <p>Toutes les entreprises doivent pouvoir <strong>recevoir</strong> des factures électroniques.</p>
+        </div>
+        <div class="tl now">
+          <span class="tag" style="background:rgba(41,98,255,.18);color:#9db8ff">Vous êtes concerné</span>
+          <div class="date">Septembre 2027</div>
+          <p>Les TPE, PME et micro-entreprises doivent <strong>émettre</strong> leurs factures aux professionnels au format électronique, via une plateforme agréée.</p>
+        </div>
+        <div class="tl">
+          <span class="tag" style="background:rgba(255,152,0,.15);color:#ffb74d">Dès aujourd'hui</span>
+          <div class="date">Avec Ardoise</div>
+          <p>Vos factures sont déjà des <strong>Factur-X (EN 16931)</strong>. En 2027, il suffira de les déposer sur votre plateforme.</p>
+        </div>
+      </div>
+      <div class="validated">
+        <span>✔ Norme européenne EN 16931</span>
+        <span>✔ Règles françaises de la réforme</span>
+        <span>✔ PDF/A-3 avec données intégrées</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Métiers -->
+  <section class="block">
+    <div class="wrap">
+      <div class="center">
+        <div class="eyebrow">Pour qui ?</div>
+        <h2 class="title">Pensé pour les commerces de proximité</h2>
+        <p class="sub">Pour facturer vos clients professionnels (restaurants, épiceries, entreprises, comités d'entreprise) et les commandes de particuliers.</p>
+      </div>
+      <div class="trades">
+        <div class="trade"><div class="e">🍎</div><b>Cidreries &amp; producteurs</b><span>Réassorts, épiceries, restaurants</span></div>
+        <div class="trade"><div class="e">💐</div><b>Fleuristes</b><span>Mariages, entreprises, événements</span></div>
+        <div class="trade"><div class="e">🥩</div><b>Boucheries</b><span>Restaurants, cantines, prix au kilo</span></div>
+        <div class="trade"><div class="e">🧀</div><b>Épiceries fines</b><span>Colis de Noël, comités d'entreprise</span></div>
+        <div class="trade"><div class="e">🍽</div><b>Traiteurs</b><span>Devis détaillés, événements</span></div>
+        <div class="trade"><div class="e">🥖</div><b>Boulangeries</b><span>Livraisons aux professionnels</span></div>
+        <div class="trade"><div class="e">🍷</div><b>Cavistes</b><span>Restaurants, cadeaux d'affaires</span></div>
+        <div class="trade"><div class="e">🧺</div><b>Artisans &amp; marchés</b><span>Commandes et prestations</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tarifs -->
+  <section class="block" id="tarifs" style="padding-top:0">
+    <div class="wrap">
+      <div class="center">
+        <div class="eyebrow">Tarifs</div>
+        <h2 class="title">Payé une fois. C'est tout.</h2>
+        <p class="sub">Pas d'abonnement obligatoire. Je vous l'installe moi-même, avec vos produits et votre logo.</p>
+      </div>
+      <div class="prices">
+        <div class="price best">
+          <span class="badge">Le plus choisi</span>
+          <h3>Licence Ardoise</h3>
+          <p class="desc">Le logiciel à vie, installé et paramétré chez vous.</p>
+          <div class="amount">149 € <small>une fois</small></div>
+          <ul class="checks">
+            <li>Logiciel à vie, sans abonnement</li>
+            <li>Installation sur place</li>
+            <li>Votre logo, vos produits, vos clients</li>
+            <li>Prise en main de 30 minutes</li>
+            <li>Mises à jour pendant 1 an</li>
+          </ul>
+          <a class="btn btn-primary" href="#contact">Je veux Ardoise</a>
+        </div>
+        <div class="price">
+          <h3>Option Sérénité</h3>
+          <p class="desc">Pour ne jamais rester bloqué.</p>
+          <div class="amount">5 € <small>/ mois</small></div>
+          <ul class="checks">
+            <li>Assistance par téléphone</li>
+            <li>Mises à jour en continu</li>
+            <li>Aide aux sauvegardes</li>
+            <li>Sans engagement</li>
+          </ul>
+          <a class="btn btn-ghost" href="#contact">En savoir plus</a>
+        </div>
+        <div class="price">
+          <h3>Pack 2027</h3>
+          <p class="desc">Votre passage à la facture électronique, accompagné.</p>
+          <div class="amount">99 € <small>une fois</small></div>
+          <ul class="checks">
+            <li>Choix de votre plateforme agréée</li>
+            <li>Ouverture et paramétrage du compte</li>
+            <li>Premier envoi accompagné</li>
+          </ul>
+          <a class="btn btn-ghost" href="#contact">En savoir plus</a>
+        </div>
+      </div>
+      <p class="note">Prix nets. Offre de lancement pour les premiers commerçants équipés.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="block reform" id="faq">
+    <div class="wrap">
+      <div class="center">
+        <div class="eyebrow">Questions fréquentes</div>
+        <h2 class="title">Vous vous demandez sûrement…</h2>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>Faut-il une connexion Internet ?</summary>
+          <p>Non. Ardoise est installé sur votre ordinateur et fonctionne sans Internet. Il vous en faut seulement une pour envoyer vos factures par e-mail.</p>
+        </details>
+        <details>
+          <summary>Où sont stockées mes données ?</summary>
+          <p>Uniquement sur votre ordinateur. Rien n'est envoyé sur Internet, personne d'autre n'y a accès. Ardoise vous rappelle chaque semaine de faire une sauvegarde sur clé USB.</p>
+        </details>
+        <details>
+          <summary>Est-ce que ça remplace ma caisse enregistreuse ?</summary>
+          <p>Non. Ardoise sert à faire vos devis et factures (restaurants, entreprises, commandes, mariages…). Les ventes au comptoir continuent de passer par votre caisse.</p>
+        </details>
+        <details>
+          <summary>Est-ce que je serai prêt pour la facture électronique de 2027 ?</summary>
+          <p>Oui. Les factures d'Ardoise sont au format officiel Factur-X (norme EN 16931), contrôlé avec les règles européennes et françaises. En 2027, vous les déposerez sur la plateforme agréée de votre choix ; le Pack 2027 vous accompagne pour la choisir et l'ouvrir.</p>
+        </details>
+        <details>
+          <summary>Je suis en micro-entreprise, sans TVA. Ça marche ?</summary>
+          <p>Oui. Il suffit de choisir « franchise en base » dans les paramètres : la mention « TVA non applicable, art. 293 B du CGI » est ajoutée automatiquement sur vos factures.</p>
+        </details>
+        <details>
+          <summary>Ça marche sur Mac, sur Windows, sur tablette ?</summary>
+          <p>Oui. Ardoise s'ouvre dans le navigateur (Chrome, Edge, Firefox, Safari) : il fonctionne sur Windows, Mac et tablette.</p>
+        </details>
+        <details>
+          <summary>Je peux l'essayer avant ?</summary>
+          <p>Bien sûr. Testez la démo en ligne avec l'exemple d'une cidrerie, ou demandez une démonstration gratuite de 10 minutes, chez vous, avec vos propres produits.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA final -->
+  <section class="final" id="contact">
+    <div class="wrap">
+      <div class="eyebrow">Démonstration gratuite</div>
+      <h2 class="title">10 minutes pour voir si Ardoise est fait pour vous</h2>
+      <p class="sub" style="margin:0 auto 34px">Je passe vous le montrer dans votre commerce, avec vos propres produits. Sans engagement.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" data-contact-mail href="#">Demander une démonstration</a>
+        <a class="btn btn-ghost" href="app.html?demo=1">Essayer la démo en ligne</a>
+      </div>
+      <p class="contact-line"><span data-contact-name></span> · <a data-contact-tel href="#"></a> · <a data-contact-mail-text href="#"></a></p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div>© <span id="year"></span> Ardoise — Devis &amp; factures des commerces de proximité.<br>Ardoise est un logiciel de facturation ; il n'est ni une caisse enregistreuse ni une plateforme agréée.</div>
+      <div class="foot-links">
+        <a href="app.html?demo=1">Démo</a>
+        <a href="marketing/plaquette.pdf">Plaquette (PDF)</a>
+        <a href="#tarifs">Tarifs</a>
+        <a href="#faq">Questions</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ===== VOS COORDONNÉES : à modifier ici =====
+    const CONTACT = {
+      nom: 'Votre nom',
+      telephone: '06 00 00 00 00',
+      email: 'votre.email@exemple.fr',
+    };
+    // ============================================
+    const mailto = 'mailto:' + CONTACT.email + '?subject=' + encodeURIComponent('Démonstration Ardoise') +
+      '&body=' + encodeURIComponent("Bonjour,\n\nJe souhaiterais une démonstration d'Ardoise.\n\nMon commerce :\nMon téléphone :\n\nMerci !");
+    document.querySelectorAll('[data-contact-mail]').forEach((a) => { if (a.getAttribute('href') === '#') a.href = mailto; });
+    document.querySelectorAll('[data-contact-mail-text]').forEach((a) => { a.href = mailto; a.textContent = CONTACT.email; });
+    document.querySelectorAll('[data-contact-tel]').forEach((a) => { a.href = 'tel:' + CONTACT.telephone.replace(/\s/g, ''); a.textContent = CONTACT.telephone; });
+    document.querySelectorAll('[data-contact-name]').forEach((s) => { s.textContent = CONTACT.nom; });
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>

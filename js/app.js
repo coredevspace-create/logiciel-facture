@@ -1750,4 +1750,9 @@ document.title = `${APP.name} — ${APP.tagline}`;
 $$('.brand-name').forEach((el) => { el.textContent = APP.name; });
 window.addEventListener('hashchange', router);
 window.addEventListener('storage', (e) => { if (e.key === STORE_KEY) { load(); router(); } });
+// Lien « Essayer la démo » (app.html?demo=1) : charge l'exemple si le logiciel est encore vide
+if (new URLSearchParams(location.search).get('demo') === '1') {
+  history.replaceState(null, '', location.pathname + (location.hash || '#/tableau'));
+  if (!DB.documents.length && !DB.clients.length) loadDemo();
+}
 router();

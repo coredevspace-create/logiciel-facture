@@ -25,6 +25,14 @@ Pensé pour les commerces qui facturent des professionnels ou des particuliers :
 
 Pour démarcher et vendre, le kit commercial est dans [`marketing/`](marketing/) : plaquette, guide client, bon de commande et argumentaire.
 
+## Site en ligne (Vercel)
+
+Le dépôt se déploie tel quel sur Vercel, sans build (Framework Preset : *Other*) :
+
+- `/` : la landing page (`index.html`). Vos coordonnées se modifient dans le bloc `CONTACT`, en bas du fichier.
+- `/app.html` : le logiciel ; `/app.html?demo=1` l'ouvre avec l'exemple de démonstration.
+- `vercel.json` empêche l'indexation par les moteurs de recherche (à retirer pour le lancement public) ; `.vercelignore` exclut l'argumentaire de vente et les outils.
+
 ## Fonctionnalités
 
 - **Tableau de bord** : chiffre d'affaires, encaissements, reste dû, retards, courbe sur 12 mois, meilleurs clients.
@@ -84,7 +92,8 @@ Ardoise produit des factures au bon format. **Il n'est pas une plateforme agré�
 ## Développement
 
 ```
-index.html            page principale
+index.html            landing page (page d'accueil du site)
+app.html              le logiciel Ardoise
 css/style.css         thème sombre (les documents imprimés restent sur fond blanc)
 js/app.js             application : données, écrans, calculs
 js/facturx.js         génération XML CII EN 16931 et PDF/A-3 (Factur-X)

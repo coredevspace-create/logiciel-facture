@@ -12,7 +12,7 @@ const path = require('path');
 
 const root = __dirname;
 const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
-let html = read('index.html');
+let html = read('app.html');
 
 // <link rel="stylesheet" href="..."> → <style>…</style>
 html = html.replace(/<link rel="stylesheet" href="([^"]+)">/g, (_, href) => `<style>\n${read(href)}\n</style>`);

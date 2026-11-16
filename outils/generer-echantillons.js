@@ -12,7 +12,7 @@ fs.mkdirSync(OUT, { recursive: true });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('dialog', (d) => d.accept());
-  await page.goto('file://' + path.resolve(__dirname, '../index.html'));
+  await page.goto('file://' + path.resolve(__dirname, '../app.html'));
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.click('[data-act="demo"]');
