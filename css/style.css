@@ -225,6 +225,11 @@ table.lines .desc-input { margin-top: 4px; font-size: 12.5px; color: var(--text)
 .alert-box.info { background: var(--primary-soft); color: #9db8ff; }
 .alert-box.warn { background: var(--warn-soft); color: #ffb74d; }
 
+/* ---------- Carte Google Drive ---------- */
+.drive-status { list-style: none; margin: 0; padding: 0; font-size: 13.5px; max-width: 520px; }
+.drive-status li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+#drive-card code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
 /* ---------- Document view ---------- */
 .doc-layout { display: grid; grid-template-columns: 1fr 290px; gap: 12px; align-items: start; }
 .side .card { padding: 14px; }

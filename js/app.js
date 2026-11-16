@@ -45,6 +45,7 @@ function defaultData() {
     products: [],
     documents: [],
     lastBackup: null,
+    drive: null, // connexion Google Drive (voir js/drive.js)
   };
 }
 
@@ -81,6 +82,7 @@ function load() {
 function save() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(DB));
+    if (window.ArdoiseDrive) window.ArdoiseDrive.onLocalSave(); // sauvegarde Google Drive automatique
     return true;
   } catch (e) {
     toast("Impossible d'enregistrer (stockage plein ou bloqué). Faites une sauvegarde fichier.", 'error');
@@ -359,6 +361,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#mod
 
 const globalActions = {
   'backup-now': () => exportBackup(),
+  'drive-connect': () => window.ArdoiseDrive && ArdoiseDrive.connect(),
 };
 
 /* =====================================================================
@@ -386,7 +389,9 @@ function renderBanner() {
   }
   const hasDocs = DB.documents.length > 0;
   const old = !DB.lastBackup || daysBetween(DB.lastBackup.slice(0, 10), today()) >= 7;
-  if (hasDocs && old) {
+  if (hasDocs && window.ArdoiseDrive && ArdoiseDrive.needsReconnect()) {
+    el.innerHTML = `<div class="banner warn">☁️ Sauvegarde Google Drive en pause : la connexion doit être renouvelée (sécurité Google). <button class="btn small" data-act="drive-connect">Reconnecter Google Drive</button></div>`;
+  } else if (hasDocs && old) {
     const since = DB.lastBackup ? `Dernière sauvegarde le ${fmtDate(DB.lastBackup.slice(0, 10))}.` : 'Aucune sauvegarde fichier pour le moment.';
     el.innerHTML = `<div class="banner warn">💾 ${since} Pensez à sauvegarder vos données sur une clé USB ou un disque. <button class="btn small" data-act="backup-now">Sauvegarder maintenant</button></div>`;
   } else {
@@ -1566,10 +1571,12 @@ function renderBackup() {
   $('#main').innerHTML = `
     <div class="page-head"><h1>Sauvegarde & export</h1></div>
 
+    ${window.ArdoiseDrive ? ArdoiseDrive.cardHTML() : ''}
+
     <div class="card"><h2>💾 Sauvegarder mes données</h2>
       <p class="muted small">Vos données sont enregistrées <b>dans ce navigateur, sur cet ordinateur</b>. Si l'ordinateur tombe en panne ou si l'historique du navigateur est effacé, elles peuvent être perdues. Téléchargez une sauvegarde chaque semaine et copiez-la sur une clé USB ou un disque externe.<br>
       Les factures doivent être conservées <b>10 ans</b>.</p>
-      <p class="small">Dernière sauvegarde : <b>${DB.lastBackup ? fmtDate(DB.lastBackup.slice(0, 10)) : 'jamais'}</b></p>
+      <p class="small">Dernière sauvegarde (fichier ou Google Drive) : <b id="last-backup">${DB.lastBackup ? fmtDate(DB.lastBackup.slice(0, 10)) : 'jamais'}</b></p>
       <button class="btn primary" data-act="backup">Télécharger une sauvegarde</button>
     </div>
 
@@ -1600,7 +1607,9 @@ function renderBackup() {
         const data = JSON.parse(reader.result);
         if (!data || !data.settings || !Array.isArray(data.documents)) throw new Error('format');
         if (!confirm(`Restaurer cette sauvegarde ?\n\n${(data.documents || []).length} document(s), ${(data.clients || []).length} client(s).\nLes données actuelles seront remplacées.`)) return;
+        const keepDrive = DB.drive; // garde la connexion Google Drive de cet ordinateur
         DB = migrate(data);
+        DB.drive = keepDrive;
         save();
         toast('Sauvegarde restaurée');
         go('#/tableau');
@@ -1612,7 +1621,9 @@ function renderBackup() {
   });
 
   const period = () => $('#exp-year').value + ($('#exp-month').value ? '-' + $('#exp-month').value : '');
+  if (window.ArdoiseDrive) ArdoiseDrive.bindCard($('#main'));
   actions = {
+    ...(window.ArdoiseDrive ? ArdoiseDrive.actions : {}),
     backup: () => { exportBackup(); renderBackup(); },
     'exp-sales': () => exportSales(period()),
     'exp-pay': () => exportPayments(period()),

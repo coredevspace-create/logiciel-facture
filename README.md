@@ -46,6 +46,7 @@ Le dépôt se déploie tel quel sur Vercel, sans build (Framework Preset : *Othe
 - **Mentions légales** ajoutées automatiquement : SIRET, TVA, pénalités, indemnité de 40 €, art. 293 B (micro-entreprise), nature de l'opération, SIREN du client, date et adresse de livraison, option TVA sur les débits.
 - **Exports pour le comptable** au format CSV, lisibles dans Excel : journal des ventes avec la TVA par taux, encaissements, clients.
 - **Sauvegarde et restauration**, avec un rappel si la dernière sauvegarde date de plus de 7 jours.
+- **Sauvegarde automatique dans Google Drive** (version en ligne) : connexion Google, accès limité aux seuls fichiers d'Ardoise (`drive.file`), un fichier par jour, restauration en un clic. Mise en service : [`docs/google-drive.md`](docs/google-drive.md).
 - **Exemple de démonstration** (une cidrerie), pour les présentations.
 
 ## Facture électronique : ce qui est vérifié

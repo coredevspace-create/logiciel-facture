@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Politique de confidentialité — Ardoise</title>
+  <meta name="description" content="Comment Ardoise traite vos données, y compris l'accès à Google Drive pour les sauvegardes.">
+  <link rel="icon" type="image/svg+xml" href="images/logo.svg">
+  <style>
+    :root { --bg: #0f121a; --panel: #1e222d; --border: #2a2e39; --text: #d1d4dc; --strong: #fff; --muted: #868b98; --blue: #5b8def; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, sans-serif; font-size: 16px; line-height: 1.65; }
+    a { color: var(--blue); }
+    header { border-bottom: 1px solid var(--border); }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 0 20px; }
+    header .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .brand { display: flex; align-items: center; gap: 10px; color: var(--strong); font-weight: 700; font-size: 19px; text-decoration: none; }
+    .brand img { width: 30px; height: 30px; }
+    main { padding: 48px 0 80px; }
+    h1 { color: var(--strong); font-size: clamp(28px, 4vw, 38px); letter-spacing: -.02em; margin: 0 0 6px; line-height: 1.2; }
+    h2 { color: var(--strong); font-size: 21px; margin: 38px 0 10px; }
+    .muted { color: var(--muted); }
+    .box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin: 22px 0; }
+    ul { padding-left: 22px; }
+    li { margin: 4px 0; }
+    code { background: #131722; border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; font-size: 14px; }
+    footer { border-top: 1px solid var(--border); padding: 28px 0; color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <header><div class="wrap">
+    <a class="brand" href="index.html"><img src="images/logo.svg" alt="">Ardoise</a>
+    <a href="index.html">← Retour au site</a>
+  </div></header>
+
+  <main class="wrap">
+    <h1>Politique de confidentialité</h1>
+    <p class="muted">Dernière mise à jour : <span id="maj">16 novembre 2026</span></p>
+
+    <div class="box">
+      <strong>En résumé :</strong> Ardoise fonctionne dans votre navigateur. Vos clients, devis et factures restent sur votre ordinateur.
+      Nous ne les recevons pas, ne les stockons pas et ne les vendons pas. Si vous activez la sauvegarde Google Drive, vos sauvegardes vont
+      directement de votre navigateur vers <em>votre</em> Google Drive, sans passer par nos serveurs.
+    </div>
+
+    <h2>1. Qui sommes-nous ?</h2>
+    <p>Ardoise est un logiciel de devis et de factures édité par <strong data-contact-name>Votre nom</strong>
+      (contact : <a data-contact-mail href="#">votre.email@exemple.fr</a>). Nous sommes le responsable du traitement pour les rares données décrites ci-dessous.</p>
+
+    <h2>2. Les données de votre activité</h2>
+    <p>Les informations que vous saisissez dans Ardoise (votre entreprise, vos clients, vos produits, vos devis, factures et paiements) sont enregistrées
+      <strong>uniquement dans le stockage local de votre navigateur</strong>, sur votre appareil. Elles ne sont envoyées à aucun serveur d'Ardoise.</p>
+    <p>Vous pouvez les exporter, les sauvegarder dans un fichier, les restaurer ou les effacer à tout moment depuis le logiciel (menu « Sauvegarde » et « Mon entreprise »).
+      Vous restez seul responsable de leur conservation, notamment de l'obligation de conserver vos factures pendant 10 ans.</p>
+
+    <h2>3. Sauvegarde Google Drive (facultative)</h2>
+    <p>Si vous choisissez de connecter Google Drive, Ardoise utilise la connexion officielle de Google (Google Identity Services) et demande une seule autorisation :</p>
+    <ul>
+      <li><code>https://www.googleapis.com/auth/drive.file</code> : accès <strong>uniquement aux fichiers créés par Ardoise</strong>. Ardoise ne peut ni voir, ni lire, ni modifier les autres fichiers de votre Google Drive.</li>
+    </ul>
+    <p>Cette autorisation sert exclusivement à :</p>
+    <ul>
+      <li>créer dans votre Drive un dossier « Ardoise - Sauvegardes » ;</li>
+      <li>y enregistrer et mettre à jour vos fichiers de sauvegarde (un par jour) ;</li>
+      <li>lister ces sauvegardes et les relire lorsque vous demandez une restauration.</li>
+    </ul>
+    <p>Les échanges se font directement entre votre navigateur et les serveurs de Google. Le jeton d'accès fourni par Google est conservé
+      temporairement dans la mémoire de votre navigateur (il expire au bout d'environ une heure) et n'est jamais transmis à Ardoise.
+      Nous n'avons aucun accès à votre compte Google ni à vos sauvegardes.</p>
+    <p>L'utilisation et le transfert par Ardoise des informations reçues des API Google respectent le
+      <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Règlement sur les données utilisateur des services API Google</a>,
+      y compris les exigences d'utilisation limitée (Limited Use). Ces données ne sont jamais utilisées à des fins publicitaires, ni vendues, ni transmises à des tiers,
+      ni utilisées pour entraîner des modèles d'intelligence artificielle.</p>
+    <p>Vous pouvez à tout moment déconnecter Google Drive dans Ardoise (menu « Sauvegarde » → « Déconnecter ») ou retirer l'accès depuis
+      <a href="https://myaccount.google.com/permissions" rel="noopener">la page des autorisations de votre compte Google</a>. Vos sauvegardes restent dans votre Drive : vous pouvez les supprimer vous-même.</p>
+
+    <h2>4. Le site internet</h2>
+    <p>Le site et le logiciel en ligne sont hébergés par Vercel Inc., qui peut enregistrer des données techniques de connexion (adresse IP, date, page consultée)
+      à des fins de sécurité et de bon fonctionnement. Nous n'utilisons ni cookies publicitaires, ni outils de mesure d'audience, ni traceurs.</p>
+    <p>Si vous nous contactez (e-mail ou téléphone), nous utilisons vos coordonnées uniquement pour vous répondre et, si vous devenez client, pour gérer votre licence et l'assistance.
+      Ces informations sont conservées pendant la durée de la relation commerciale, puis le temps imposé par les obligations comptables.</p>
+
+    <h2>5. Vos droits</h2>
+    <p>Conformément au RGPD, vous disposez d'un droit d'accès, de rectification, d'effacement, d'opposition et de portabilité sur les données vous concernant que nous détenons.
+      Pour l'exercer, écrivez-nous à <a data-contact-mail href="#">votre.email@exemple.fr</a>. Vous pouvez aussi adresser une réclamation à la CNIL (<a href="https://www.cnil.fr" rel="noopener">cnil.fr</a>).</p>
+
+    <h2>6. Modifications</h2>
+    <p>Cette politique peut évoluer, par exemple si de nouvelles fonctionnalités sont ajoutées. La date de mise à jour figure en haut de cette page.</p>
+  </main>
+
+  <footer><div class="wrap">© <span id="year"></span> Ardoise — <a href="index.html">Accueil</a> · <a href="app.html?demo=1">Démo</a></div></footer>
+
+  <script>
+    // ===== VOS COORDONNÉES : identiques à celles de la page d'accueil =====
+    const CONTACT = { nom: 'Votre nom', email: 'votre.email@exemple.fr' };
+    document.querySelectorAll('[data-contact-name]').forEach((e) => { e.textContent = CONTACT.nom; });
+    document.querySelectorAll('[data-contact-mail]').forEach((a) => { a.href = 'mailto:' + CONTACT.email; a.textContent = CONTACT.email; });
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
