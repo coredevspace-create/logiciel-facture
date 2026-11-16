@@ -31,6 +31,7 @@ Le dépôt se déploie tel quel sur Vercel, sans build (Framework Preset : *Othe
 
 - `/` : la landing page (`index.html`). Vos coordonnées se modifient dans le bloc `CONTACT`, en bas du fichier.
 - `/app.html` : le logiciel ; `/app.html?demo=1` l'ouvre avec l'exemple de démonstration.
+- `images/photos/` : photos d'illustration des métiers, créées par IA pour Ardoise (scènes fictives, sans marque ni personne réelle), utilisables librement sur le site et les supports commerciaux.
 - `vercel.json` empêche l'indexation par les moteurs de recherche (à retirer pour le lancement public) ; `.vercelignore` exclut l'argumentaire de vente et les outils.
 
 ## Fonctionnalités

@@ -192,6 +192,48 @@
     footer a:hover { color: var(--strong); }
     .foot-links { display: flex; gap: 20px; flex-wrap: wrap; }
 
+    /* ---------- Photos : mosaïque des métiers ---------- */
+    .bento {
+      display: grid; gap: 14px; margin-top: 52px;
+      grid-template-columns: repeat(4, 1fr); grid-auto-rows: 220px;
+      grid-template-areas: "f f b c" "f f bo c" "fr ca t t";
+    }
+    .tile { position: relative; margin: 0; border-radius: 16px; overflow: hidden; background: #1a1e28; border: 1px solid var(--border); }
+    .tile img { width: 100%; height: 100%; object-fit: cover; transition: transform .7s ease; }
+    .tile:hover img { transform: scale(1.05); }
+    .tile figcaption {
+      position: absolute; left: 0; right: 0; bottom: 0; padding: 48px 18px 16px;
+      background: linear-gradient(180deg, rgba(10,12,18,0), rgba(10,12,18,.88)); color: #fff; font-weight: 700; font-size: 17px; letter-spacing: -.01em;
+    }
+    .tile figcaption span { display: block; font-weight: 400; font-size: 13.5px; color: #c9cdd6; letter-spacing: 0; margin-top: 2px; }
+    .tile.big figcaption { font-size: 22px; padding: 70px 24px 22px; }
+    .tile.big figcaption span { font-size: 15px; }
+    .a-f { grid-area: f; } .a-b { grid-area: b; } .a-c { grid-area: c; } .a-bo { grid-area: bo; }
+    .a-fr { grid-area: fr; } .a-ca { grid-area: ca; } .a-t { grid-area: t; }
+
+    /* ---------- Photo + capture du logiciel ---------- */
+    .combo { position: relative; padding: 0 28px 44px 0; }
+    .combo .photo { border-radius: 16px; overflow: hidden; aspect-ratio: 3 / 2; border: 1px solid var(--border); box-shadow: 0 30px 70px rgba(0,0,0,.5); }
+    .combo .photo img { width: 100%; height: 100%; object-fit: cover; }
+    .combo .overlay {
+      position: absolute; right: 0; bottom: 0; width: 64%; border-radius: 10px; overflow: hidden;
+      border: 1px solid #3a3f4c; box-shadow: 0 26px 60px rgba(0,0,0,.65); background: var(--bg-2);
+    }
+    .combo .overlay.phone-o { width: 30%; border-radius: 22px; border: 6px solid #262b37; right: 6px; bottom: -10px; }
+    .combo .chip {
+      position: absolute; left: 18px; top: 18px; background: rgba(19, 23, 34, .9); border: 1px solid #3a3f4c; border-radius: 12px;
+      padding: 10px 14px; box-shadow: 0 14px 34px rgba(0,0,0,.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: flex; gap: 10px; align-items: center; font-size: 14px; color: var(--strong);
+    }
+    .combo .chip i { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-style: normal; font-size: 15px; }
+    .combo .chip small { display: block; color: var(--muted); font-size: 12px; }
+
+    /* ---------- CTA final avec photo ---------- */
+    .final.photo-bg {
+      background: linear-gradient(180deg, rgba(15,18,26,.94), rgba(15,18,26,.80) 50%, rgba(15,18,26,.95)), url("images/photos/cidrerie.webp") center 35% / cover no-repeat;
+      border-top: 1px solid var(--border);
+    }
+
     /* ---------- Responsive ---------- */
     @media (max-width: 960px) {
       .nav-links { display: none; }
@@ -201,6 +243,8 @@
       .feature, .feature.rev { grid-template-columns: 1fr; gap: 34px; margin-top: 70px; }
       .feature.rev .f-text { order: 0; }
       .float { display: none; }
+      .bento { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 190px; grid-template-areas: "f f" "f f" "b c" "bo c" "fr ca" "t t"; }
+      .combo { padding: 0 14px 36px 0; }
       section.block { padding: 80px 0; }
       .price .desc { min-height: 0; }
     }
@@ -214,6 +258,13 @@
       .stat { padding: 22px 18px; }
       .stat .v { font-size: 32px; }
       .hero-cta .btn { width: 100%; }
+      .bento { grid-auto-rows: 150px; gap: 10px; }
+      .tile figcaption { font-size: 15px; padding: 36px 12px 10px; }
+      .tile figcaption span { font-size: 12px; }
+      .tile.big figcaption { font-size: 19px; padding: 50px 16px 14px; }
+      .combo .overlay { width: 72%; }
+      .combo .overlay.phone-o { width: 36%; }
+      .combo .chip { left: 10px; top: 10px; font-size: 12.5px; padding: 8px 10px; }
     }
   </style>
 </head>
@@ -227,6 +278,7 @@
         Ardoise
       </a>
       <nav class="nav-links">
+        <a href="#metiers">Métiers</a>
         <a href="#fonctionnalites">Fonctionnalités</a>
         <a href="#reforme">Facture électronique</a>
         <a href="#tarifs">Tarifs</a>
@@ -269,6 +321,26 @@
       <span>🍎 <b>Cidreries</b> &amp; producteurs</span><span>💐 <b>Fleuristes</b></span><span>🥩 <b>Boucheries</b></span><span>🧀 <b>Épiceries fines</b></span><span>🍽 <b>Traiteurs</b></span><span>🥖 <b>Boulangeries</b></span><span>🍷 <b>Cavistes</b></span><span>🧺 <b>Marchés</b> &amp; artisans</span>
     </div>
   </div>
+
+  <!-- Métiers en photos -->
+  <section class="block" id="metiers" style="padding-bottom:40px">
+    <div class="wrap">
+      <div class="center">
+        <div class="eyebrow">Pour qui ?</div>
+        <h2 class="title">Pensé pour ceux qui font vivre nos centres-villes</h2>
+        <p class="sub">Fleuristes, bouchers, producteurs, boulangers, fromagers, cavistes, traiteurs : pour facturer vos clients professionnels (restaurants, épiceries, entreprises, comités d'entreprise) et les commandes de particuliers.</p>
+      </div>
+      <div class="bento">
+        <figure class="tile big a-f"><img src="images/photos/fleuriste.webp" alt="Fleuriste composant un bouquet de pivoines dans sa boutique" loading="lazy"><figcaption>Fleuristes<span>Mariages, entreprises, événements : devis puis facture en un clic</span></figcaption></figure>
+        <figure class="tile a-b"><img src="images/photos/boucherie-720.webp" alt="Boucher découpant une côte de bœuf derrière son comptoir" loading="lazy"><figcaption>Boucheries<span>Prix au kilo, TVA à 5,5 %</span></figcaption></figure>
+        <figure class="tile a-c"><img src="images/photos/cidrerie-720.webp" alt="Producteur de cidre dans son verger normand" loading="lazy"><figcaption>Cidreries &amp; producteurs<span>Réassorts des épiceries et restaurants</span></figcaption></figure>
+        <figure class="tile a-bo"><img src="images/photos/boulangerie-720.webp" alt="Boulangère rangeant des baguettes dans des paniers" loading="lazy"><figcaption>Boulangeries<span>Livraisons aux professionnels</span></figcaption></figure>
+        <figure class="tile a-fr"><img src="images/photos/fromagerie-720.webp" alt="Fromagère coupant une part de comté" loading="lazy"><figcaption>Fromagers &amp; épiceries fines<span>Colis de Noël, CSE</span></figcaption></figure>
+        <figure class="tile a-ca"><img src="images/photos/caviste-720.webp" alt="Caviste conseillant un client dans sa cave à vin" loading="lazy"><figcaption>Cavistes<span>Restaurants, cadeaux d'affaires</span></figcaption></figure>
+        <figure class="tile a-t"><img src="images/photos/traiteur.webp" alt="Traiteur préparant des plateaux de canapés pour une réception" loading="lazy"><figcaption>Traiteurs<span>Devis détaillés pour mariages et réceptions</span></figcaption></figure>
+      </div>
+    </div>
+  </section>
 
   <!-- Bénéfices -->
   <section class="block">
@@ -319,7 +391,11 @@
             <li>Micro-entreprise : « TVA non applicable » ajouté automatiquement</li>
           </ul>
         </div>
-        <div class="shot"><img src="marketing/img/saisie-facture.png" alt="Saisie d'une facture dans Ardoise" loading="lazy" width="2720" height="1640"></div>
+        <div class="combo">
+          <div class="photo"><img src="images/photos/commercante-ordi.webp" alt="Commerçant faisant ses factures sur un ordinateur portable dans son épicerie" loading="lazy"></div>
+          <div class="chip"><i style="background:rgba(41,98,255,.25)">🧾</i><div><small>Nouvelle facture</small>Prête en 2 minutes</div></div>
+          <div class="overlay"><img src="marketing/img/saisie-facture.png" alt="Saisie d'une facture dans Ardoise" loading="lazy" width="2720" height="1640"></div>
+        </div>
       </div>
 
       <div class="feature rev">
@@ -349,7 +425,11 @@
             <li>Utilisable aussi sur tablette et téléphone</li>
           </ul>
         </div>
-        <div><div class="phone"><img src="marketing/img/mobile.png" alt="Ardoise sur téléphone" loading="lazy"></div></div>
+        <div class="combo">
+          <div class="photo"><img src="images/photos/livraison-restaurant.webp" alt="Producteur livrant des caisses de pommes et du cidre à un chef de restaurant" loading="lazy"></div>
+          <div class="chip"><i style="background:rgba(8,153,129,.25)">✓</i><div><small>Restaurant La Marmite</small>Facture payée · 244,08 €</div></div>
+          <div class="overlay phone-o"><img src="marketing/img/mobile.png" alt="Tableau de bord d'Ardoise sur téléphone" loading="lazy"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -383,27 +463,6 @@
         <span>✔ Norme européenne EN 16931</span>
         <span>✔ Règles françaises de la réforme</span>
         <span>✔ PDF/A-3 avec données intégrées</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- Métiers -->
-  <section class="block">
-    <div class="wrap">
-      <div class="center">
-        <div class="eyebrow">Pour qui ?</div>
-        <h2 class="title">Pensé pour les commerces de proximité</h2>
-        <p class="sub">Pour facturer vos clients professionnels (restaurants, épiceries, entreprises, comités d'entreprise) et les commandes de particuliers.</p>
-      </div>
-      <div class="trades">
-        <div class="trade"><div class="e">🍎</div><b>Cidreries &amp; producteurs</b><span>Réassorts, épiceries, restaurants</span></div>
-        <div class="trade"><div class="e">💐</div><b>Fleuristes</b><span>Mariages, entreprises, événements</span></div>
-        <div class="trade"><div class="e">🥩</div><b>Boucheries</b><span>Restaurants, cantines, prix au kilo</span></div>
-        <div class="trade"><div class="e">🧀</div><b>Épiceries fines</b><span>Colis de Noël, comités d'entreprise</span></div>
-        <div class="trade"><div class="e">🍽</div><b>Traiteurs</b><span>Devis détaillés, événements</span></div>
-        <div class="trade"><div class="e">🥖</div><b>Boulangeries</b><span>Livraisons aux professionnels</span></div>
-        <div class="trade"><div class="e">🍷</div><b>Cavistes</b><span>Restaurants, cadeaux d'affaires</span></div>
-        <div class="trade"><div class="e">🧺</div><b>Artisans &amp; marchés</b><span>Commandes et prestations</span></div>
       </div>
     </div>
   </section>
@@ -500,7 +559,7 @@
   </section>
 
   <!-- CTA final -->
-  <section class="final" id="contact">
+  <section class="final photo-bg" id="contact">
     <div class="wrap">
       <div class="eyebrow">Démonstration gratuite</div>
       <h2 class="title">10 minutes pour voir si Ardoise est fait pour vous</h2>
@@ -522,6 +581,7 @@
         <a href="#tarifs">Tarifs</a>
         <a href="#faq">Questions</a>
       </div>
+      <div style="flex-basis:100%;font-size:12.5px;color:#5f6472">Photos d'illustration : scènes fictives créées pour Ardoise.</div>
     </div>
   </footer>
 
