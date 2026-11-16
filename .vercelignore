@@ -1,0 +1,6 @@
+# Fichiers à ne PAS publier sur Vercel
+marketing/argumentaire.md
+outils/
+build.js
+package.json
+README.md
