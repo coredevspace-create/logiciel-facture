@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Ardoise — Bon de commande et conditions de licence</title>
+<!--
+  MODÈLE À ADAPTER : complétez vos coordonnées (bloc « Vendeur ») et faites relire
+  les conditions par un professionnel (expert-comptable, CCI, juriste) avant usage.
+-->
+<style>
+  @page { size: A4; margin: 0; }
+  :root { --ink: #131722; --blue: #2962ff; --muted: #5d6270; --line: #d9dde4; --soft: #f3f6fd; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Inter", -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: #e9ebef; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; margin: 10mm auto; background: #fff; padding: 12mm 14mm; display: flex; flex-direction: column; }
+  @media print { body { background: #fff; } .page { margin: 0; page-break-after: always; } }
+  header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--ink); padding-bottom: 4mm; margin-bottom: 5mm; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand svg { width: 34px; height: 34px; }
+  .brand b { font-size: 22px; }
+  h1 { margin: 0; font-size: 18px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--blue); margin: 5mm 0 2.5mm; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .box { border: 1px solid var(--line); border-radius: 6px; padding: 3.5mm 4mm; font-size: 11.5px; line-height: 1.5; min-height: 34mm; }
+  .box .t { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 1.5mm; }
+  .field { border-bottom: 1px dotted #9aa0ab; height: 6.2mm; margin-bottom: .6mm; font-size: 10.5px; color: var(--muted); padding-top: 1.5mm; }
+  table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  th { background: var(--soft); text-align: left; padding: 2.4mm 3mm; font-size: 10.5px; border-bottom: 1px solid var(--line); }
+  td { padding: 2.6mm 3mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.c { text-align: center; width: 16mm; }
+  td.r, th.r { text-align: right; width: 28mm; white-space: nowrap; }
+  .sq { display: inline-block; width: 4mm; height: 4mm; border: 1.2px solid var(--ink); border-radius: 1px; vertical-align: middle; }
+  .muted { color: var(--muted); }
+  .note { font-size: 10.5px; color: var(--muted); line-height: 1.5; margin-top: 2mm; }
+  .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; margin-top: auto; }
+  .sign .box { min-height: 34mm; }
+  .cgv { columns: 2; column-gap: 7mm; font-size: 10.3px; line-height: 1.5; text-align: justify; }
+  .cgv h3 { font-size: 11px; margin: 2.6mm 0 1mm; break-after: avoid; }
+  .cgv p { margin: 0 0 1.5mm; }
+</style>
+</head>
+<body>
+
+<section class="page">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2962ff"/><rect x="10" y="14" width="44" height="32" rx="5" fill="#131722" stroke="#fff" stroke-width="3"/><polyline points="17,38 25,30 31,34 41,23" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="35.5,22.5 41.5,22.5 41.5,28.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="22" y="50" width="20" height="3.5" rx="1.75" fill="#fff" opacity=".85"/></svg>
+      <b>Ardoise</b>
+    </div>
+    <h1>Bon de commande</h1>
+  </header>
+
+  <div class="two">
+    <div class="box">
+      <div class="t">Vendeur</div>
+      <b>Votre nom ou votre entreprise</b><br>
+      Adresse<br>
+      SIRET : ………………………… · TVA : non applicable, art. 293 B du CGI (si micro-entreprise)<br>
+      Tél. 06 00 00 00 00 · votre.email@exemple.fr
+    </div>
+    <div class="box">
+      <div class="t">Client</div>
+      <div class="field">Entreprise :</div>
+      <div class="field">Nom du gérant :</div>
+      <div class="field">Adresse :</div>
+      <div class="field">SIRET :</div>
+      <div class="field">Tél. / e-mail :</div>
+    </div>
+  </div>
+
+  <h2>Commande</h2>
+  <table>
+    <thead><tr><th style="width:8mm"></th><th>Désignation</th><th class="r">Prix</th><th class="c">Qté</th><th class="r">Total</th></tr></thead>
+    <tbody>
+      <tr><td><span class="sq"></span></td><td><b>Licence Ardoise</b> — licence d'utilisation à durée illimitée pour un établissement, installation sur un ordinateur, paramétrage (logo, catalogue, clients), prise en main de 30 minutes, mises à jour pendant 12 mois.</td><td class="r">149,00 €</td><td class="c"></td><td class="r"></td></tr>
+      <tr><td><span class="sq"></span></td><td><b>Option Sérénité</b> — assistance par téléphone, mises à jour, aide aux sauvegardes. Mensuelle, sans engagement, résiliable à tout moment avec un préavis d'un mois.</td><td class="r">5,00 € / mois</td><td class="c"></td><td class="r"></td></tr>
+      <tr><td><span class="sq"></span></td><td><b>Pack facture électronique 2027</b> — aide au choix d'une plateforme agréée, ouverture et paramétrage du compte, accompagnement du premier envoi. L'abonnement éventuel à la plateforme reste à la charge du client.</td><td class="r">99,00 €</td><td class="c"></td><td class="r"></td></tr>
+      <tr><td><span class="sq"></span></td><td><b>Poste supplémentaire</b> — installation sur un second ordinateur du même établissement.</td><td class="r">49,00 €</td><td class="c"></td><td class="r"></td></tr>
+      <tr><td></td><td class="muted">Remise / offre de lancement</td><td></td><td></td><td class="r"></td></tr>
+      <tr><td></td><td><b>Total à payer</b></td><td></td><td></td><td class="r"><b></b></td></tr>
+    </tbody>
+  </table>
+  <p class="note">Prix nets. Règlement : à l'installation, par virement, chèque ou espèces. Pour l'option mensuelle : prélèvement ou virement permanent.</p>
+
+  <h2>Installation</h2>
+  <div class="two">
+    <div class="box" style="min-height:24mm">
+      <div class="field">Date d'installation prévue :</div>
+      <div class="field">Ordinateur / navigateur :</div>
+      <div class="field">Informations à préparer : logo, liste de prix, clients</div>
+    </div>
+    <div class="box" style="min-height:24mm">
+      <div class="t">Mode de règlement</div>
+      <span class="sq"></span> Virement &nbsp;&nbsp; <span class="sq"></span> Chèque &nbsp;&nbsp; <span class="sq"></span> Espèces<br><br>
+      <span class="sq"></span> J'ai lu et j'accepte les conditions de licence au verso.
+    </div>
+  </div>
+
+  <div class="sign" style="margin-top:7mm">
+    <div class="box"><div class="t">Le vendeur</div>Date et signature :</div>
+    <div class="box"><div class="t">Le client</div>« Bon pour accord », date, signature et cachet :</div>
+  </div>
+</section>
+
+<section class="page">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2962ff"/><rect x="10" y="14" width="44" height="32" rx="5" fill="#131722" stroke="#fff" stroke-width="3"/><polyline points="17,38 25,30 31,34 41,23" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="35.5,22.5 41.5,22.5 41.5,28.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="22" y="50" width="20" height="3.5" rx="1.75" fill="#fff" opacity=".85"/></svg>
+      <b>Ardoise</b>
+    </div>
+    <h1>Conditions de licence et de vente</h1>
+  </header>
+  <div class="cgv">
+    <h3>1. Objet</h3>
+    <p>Les présentes conditions régissent la vente d'une licence d'utilisation du logiciel Ardoise (ci-après « le Logiciel ») et des prestations associées entre le Vendeur et le Client professionnel désignés au bon de commande.</p>
+    <h3>2. Licence</h3>
+    <p>Le Vendeur concède au Client une licence d'utilisation non exclusive, non transférable et à durée illimitée du Logiciel, pour les besoins de son établissement. Le Client s'interdit de revendre, louer, diffuser ou mettre à disposition de tiers le Logiciel. Chaque installation supplémentaire sur un autre ordinateur fait l'objet d'une commande « Poste supplémentaire ». Le Logiciel intègre des composants libres (pdf-lib, fontkit, police Liberation Sans) distribués sous leurs propres licences, mentionnées dans le Logiciel.</p>
+    <h3>3. Installation et prise en main</h3>
+    <p>Le Vendeur installe le Logiciel sur l'ordinateur du Client, le paramètre (coordonnées, logo, catalogue, clients fournis par le Client) et assure une prise en main d'environ 30 minutes. Le Client fournit des informations exactes et reste responsable des données saisies, notamment des prix et des taux de TVA appliqués, qu'il lui appartient de faire valider par son expert-comptable.</p>
+    <h3>4. Mises à jour et assistance</h3>
+    <p>Les mises à jour sont fournies gratuitement pendant 12 mois à compter de l'installation. Au-delà, elles sont incluses dans l'Option Sérénité ou facturées à la demande. L'Option Sérénité comprend l'assistance téléphonique aux heures ouvrables et l'aide aux sauvegardes ; elle est sans engagement et résiliable à tout moment, avec un préavis d'un mois.</p>
+    <h3>5. Données et sauvegardes</h3>
+    <p>Le Logiciel fonctionne localement : les données du Client sont enregistrées sur son ordinateur et ne sont ni hébergées ni consultées par le Vendeur. Le Client est seul responsable de la sauvegarde régulière de ses données, à l'aide de la fonction prévue dans le Logiciel, et de leur conservation pendant la durée légale (10 ans pour les factures). Le Vendeur ne saurait être tenu responsable d'une perte de données due à une panne, à un effacement du navigateur ou à une absence de sauvegarde.</p>
+    <h3>6. Facture électronique</h3>
+    <p>Le Logiciel produit des factures au format Factur-X (profil EN 16931). L'émission et la réception des factures électroniques via une plateforme agréée relèvent du contrat entre le Client et la plateforme de son choix. Le Pack 2027 est une prestation d'accompagnement ; il n'inclut pas l'abonnement éventuel à cette plateforme.</p>
+    <h3>7. Limites d'usage</h3>
+    <p>Le Logiciel est un outil de devis et de facturation. Il n'est pas un logiciel de caisse ni un système d'encaissement au sens de l'article 286 du Code général des impôts et ne doit pas être utilisé pour enregistrer les ventes au comptoir.</p>
+    <h3>8. Prix et paiement</h3>
+    <p>Les prix sont ceux indiqués au bon de commande. La licence est payable à l'installation. En cas de retard de paiement, des pénalités au taux de trois fois le taux d'intérêt légal sont exigibles, ainsi qu'une indemnité forfaitaire de 40 € pour frais de recouvrement (articles L441-10 et D441-5 du Code de commerce).</p>
+    <h3>9. Garantie et responsabilité</h3>
+    <p>Le Vendeur s'engage à corriger dans un délai raisonnable les anomalies reproductibles qui lui sont signalées. Sa responsabilité est limitée au montant payé par le Client au titre de la licence. Il ne peut être tenu responsable des dommages indirects, notamment d'une perte de chiffre d'affaires.</p>
+    <h3>10. Droit applicable</h3>
+    <p>Les présentes conditions sont soumises au droit français. En cas de litige, les parties recherchent d'abord une solution amiable ; à défaut, le tribunal compétent est celui du domicile du Vendeur.</p>
+  </div>
+  <p class="note" style="margin-top:auto">Modèle fourni à titre indicatif, à faire relire par un professionnel avant utilisation.</p>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Ardoise — Guide rapide</title>
+<!-- À imprimer et à laisser au commerçant après l'installation. Remplacez le contact en bas de page. -->
+<style>
+  @page { size: A4; margin: 0; }
+  :root { --ink: #131722; --blue: #2962ff; --green: #089981; --muted: #5d6270; --line: #e3e6ec; --soft: #f3f6fd; --warn: #fff6e5; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Inter", -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: #e9ebef; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; margin: 10mm auto; background: #fff; padding: 10mm 13mm; display: flex; flex-direction: column; }
+  @media print { body { background: #fff; } .page { margin: 0; } }
+  header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--ink); padding-bottom: 4mm; margin-bottom: 4mm; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand svg { width: 38px; height: 38px; }
+  .brand b { font-size: 24px; }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 3.5mm 4.5mm; }
+  .box.full { grid-column: 1 / -1; }
+  .box.blue { background: var(--soft); border-color: #cfdaf8; }
+  .box.warn { background: var(--warn); border-color: #f3dcae; }
+  h2 { font-size: 14.5px; margin: 0 0 2.5mm; display: flex; align-items: center; gap: 8px; }
+  h2 .n { background: var(--blue); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; flex: 0 0 22px; }
+  ol, ul { margin: 0; padding-left: 18px; font-size: 11.5px; line-height: 1.5; }
+  p { font-size: 11.5px; line-height: 1.5; margin: 0 0 1.5mm; }
+  .k { display: inline-block; background: var(--ink); color: #fff; border-radius: 4px; padding: 0 6px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .kb { display: inline-block; background: var(--blue); color: #fff; border-radius: 4px; padding: 0 6px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .kg { display: inline-block; background: var(--green); color: #fff; border-radius: 4px; padding: 0 6px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  footer { margin-top: auto; border-top: 1px solid var(--line); padding-top: 4mm; display: flex; justify-content: space-between; font-size: 12px; }
+  footer b { font-size: 13px; }
+</style>
+</head>
+<body>
+<section class="page">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2962ff"/><rect x="10" y="14" width="44" height="32" rx="5" fill="#131722" stroke="#fff" stroke-width="3"/><polyline points="17,38 25,30 31,34 41,23" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="35.5,22.5 41.5,22.5 41.5,28.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="22" y="50" width="20" height="3.5" rx="1.75" fill="#fff" opacity=".85"/></svg>
+      <b>Ardoise</b>
+    </div>
+    <h1>Guide rapide — à garder près de l'ordinateur</h1>
+  </header>
+
+  <div class="grid">
+    <div class="box blue full">
+      <h2>Ouvrir Ardoise</h2>
+      <p>Double-cliquez sur l'icône <b>Ardoise</b> du bureau. Le logiciel s'ouvre dans votre navigateur (Chrome ou Edge) <b>et fonctionne même sans Internet</b>.
+      Ouvrez-le toujours de la même façon, avec le même navigateur : vos données sont enregistrées dans cet ordinateur.</p>
+    </div>
+
+    <div class="box">
+      <h2><span class="n">1</span>Faire une facture</h2>
+      <ol>
+        <li>Cliquez sur <span class="kb">+ Facture</span> en haut à droite.</li>
+        <li>Choisissez le <b>client</b> (ou <span class="k">+ Nouveau client</span>).</li>
+        <li>Tapez le nom d'un <b>article</b> : il s'ajoute avec son prix. Modifiez la quantité.</li>
+        <li>Vérifiez le total, puis cliquez sur <span class="kg">Valider la facture</span>.</li>
+        <li>Cliquez sur <span class="kb">⬇ PDF Factur-X</span> : le PDF arrive dans « Téléchargements ».</li>
+      </ol>
+      <p style="margin-top:2mm">Une facture validée ne peut plus être modifiée. En cas d'erreur : ouvrez-la et cliquez sur <span class="k">↩ Créer un avoir</span>.</p>
+    </div>
+
+    <div class="box">
+      <h2><span class="n">2</span>Faire un devis</h2>
+      <ol>
+        <li>Cliquez sur <span class="k">+ Devis</span>, remplissez comme une facture, puis <span class="kb">Enregistrer</span>.</li>
+        <li>Téléchargez le PDF et envoyez-le au client.</li>
+        <li>Quand le client accepte : ouvrez le devis et cliquez sur <span class="kg">→ Transformer en facture</span>.</li>
+      </ol>
+      <h2 style="margin-top:4mm"><span class="n">3</span>Envoyer par e-mail</h2>
+      <p>Sur un document, cliquez sur <span class="k">✉ Envoyer par e-mail</span> : téléchargez le PDF, ouvrez votre messagerie (le message est déjà écrit) et <b>joignez le PDF</b>.</p>
+    </div>
+
+    <div class="box">
+      <h2><span class="n">4</span>Être payé</h2>
+      <ul>
+        <li>Quand le client paie : ouvrez la facture → <span class="kg">+ Enregistrer un paiement</span>.</li>
+        <li>Le <b>tableau de bord</b> affiche en <b style="color:#f23645">rouge</b> les factures en retard.</li>
+        <li>Pour relancer : ouvrez la facture → <span class="k">🔔 Relancer le client</span>. Trois lettres sont prêtes, de la plus aimable à la plus ferme.</li>
+      </ul>
+    </div>
+
+    <div class="box">
+      <h2><span class="n">5</span>Pour le comptable</h2>
+      <p>Menu <span class="k">Sauvegarde</span> → « Export pour le comptable » : choisissez le mois ou l'année, puis <b>Journal des ventes</b>. Le fichier s'ouvre dans Excel, avec la TVA par taux.</p>
+      <h2 style="margin-top:4mm"><span class="n">6</span>Mes produits et prix</h2>
+      <p>Menu <span class="k">Catalogue</span> : ajoutez ou modifiez vos articles (prix TTC ou HT, taux de TVA). Les nouveaux prix s'appliquent aux prochaines factures.</p>
+    </div>
+
+    <div class="box warn full">
+      <h2>💾 La règle d'or : sauvegarder chaque semaine</h2>
+      <p>Tous les vendredis : menu <span class="k">Sauvegarde</span> → <span class="kb">Télécharger une sauvegarde</span>, puis copiez le fichier sur une <b>clé USB</b> ou un disque externe.
+      Sans sauvegarde, une panne d'ordinateur ou un nettoyage du navigateur peut tout effacer. Ardoise vous le rappelle par un bandeau orange. Les factures sont à conserver <b>10 ans</b>.</p>
+    </div>
+
+    <div class="box full">
+      <h2>📨 Facture électronique (obligatoire pour les factures aux professionnels à partir de septembre 2027)</h2>
+      <p>Les PDF de vos factures validées sont au <b>format officiel Factur-X</b>. À partir de 2027, il suffira de les déposer sur votre <b>plateforme agréée</b> (celle choisie ensemble) au lieu de les envoyer par e-mail.
+      Si un client professionnel n'a pas de <b>SIREN</b> dans sa fiche, Ardoise vous le signale : pensez à le compléter.</p>
+    </div>
+  </div>
+
+  <footer>
+    <div>Une question, un problème ? Appelez-moi, je suis là pour vous aider.</div>
+    <div style="text-align:right"><b>Votre nom</b> · 06 00 00 00 00 · votre.email@exemple.fr</div>
+  </footer>
+</section>
+</body>
+</html>

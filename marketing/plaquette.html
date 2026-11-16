@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Ardoise — Plaquette commerciale</title>
+<!--
+  PERSONNALISATION : remplacez vos coordonnées dans le bloc « contact » tout en bas,
+  puis ouvrez ce fichier dans Chrome → Imprimer → « Enregistrer au format PDF »
+  (format A4, marges : aucune, cocher « Graphiques d'arrière-plan »).
+-->
+<style>
+  @page { size: A4; margin: 0; }
+  :root { --ink: #131722; --ink2: #1e222d; --blue: #2962ff; --green: #089981; --red: #f23645; --muted: #5d6270; --line: #e3e6ec; --soft: #f3f6fd; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Inter", -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: #e9ebef; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; margin: 10mm auto; background: #fff; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  @media print { body { background: #fff; } .page { margin: 0; page-break-after: always; } }
+
+  .hero { background: var(--ink); color: #fff; padding: 12mm 15mm 0; position: relative; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { width: 46px; height: 46px; }
+  .brand b { font-size: 30px; letter-spacing: -.02em; }
+  .hero h1 { font-size: 29px; line-height: 1.15; margin: 6mm 0 3mm; letter-spacing: -.02em; max-width: 150mm; }
+  .hero h1 em { font-style: normal; color: #6c93ff; }
+  .hero p.lead { font-size: 14.5px; line-height: 1.5; color: #c4c8d2; margin: 0; max-width: 150mm; }
+  .tag { display: inline-block; margin-bottom: 0; background: rgba(41,98,255,.18); color: #9db8ff; border: 1px solid rgba(41,98,255,.45); padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600; margin-top: 6mm; }
+  .shot { margin: 6mm 0 -20mm; height: 73mm; object-fit: cover; object-position: top left; border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.45); width: 100%; display: block; border: 1px solid #2a2e39; }
+
+  .content { padding: 27mm 15mm 0; flex: 1; }
+  .content.p2 { padding-top: 11mm; }
+  h2 { font-size: 19px; margin: 0 0 4mm; letter-spacing: -.01em; }
+  h2 small { display: block; font-size: 12px; color: var(--blue); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+
+  .benefits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; margin-bottom: 6mm; }
+  .benefit { border: 1px solid var(--line); border-radius: 8px; padding: 4.5mm; }
+  .benefit .ico { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; font-size: 18px; margin-bottom: 3mm; }
+  .benefit h3 { margin: 0 0 2mm; font-size: 14.5px; }
+  .benefit p { margin: 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+
+  .reform { background: var(--soft); border-radius: 10px; padding: 6mm; display: grid; grid-template-columns: 1.1fr 1fr; gap: 6mm; align-items: center; }
+  .reform p { font-size: 12.5px; line-height: 1.55; margin: 0 0 3mm; }
+  .timeline { position: relative; padding-left: 18px; }
+  .timeline::before { content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: #c8d3f5; }
+  .step { position: relative; margin-bottom: 4mm; font-size: 12px; line-height: 1.45; }
+  .step::before { content: ""; position: absolute; left: -18px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 3px solid var(--blue); }
+  .step.done::before { background: var(--blue); }
+  .step b { display: block; font-size: 13px; }
+  .check { color: var(--green); font-weight: 700; }
+
+  .features { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 7mm; margin-bottom: 6mm; }
+  .feat { display: flex; gap: 10px; font-size: 12px; line-height: 1.45; }
+  .feat .dot { flex: 0 0 22px; height: 22px; border-radius: 6px; background: var(--soft); color: var(--blue); display: grid; place-items: center; font-weight: 800; font-size: 12px; }
+  .feat b { display: block; font-size: 13px; }
+  .feat span { color: var(--muted); }
+
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-bottom: 6mm; align-items: start; }
+  .duo img { width: 100%; height: 78mm; object-fit: cover; object-position: top; border-radius: 6px; border: 1px solid var(--line); box-shadow: 0 6px 20px rgba(0,0,0,.08); }
+  .trades { display: flex; flex-wrap: wrap; gap: 6px; margin: 3mm 0; }
+  .trades span { border: 1px solid var(--line); border-radius: 20px; padding: 4px 10px; font-size: 11.5px; }
+  .small { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+  .prices { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 4mm; margin-bottom: 3mm; margin-top: 5mm; }
+  .price { border: 1px solid var(--line); border-radius: 10px; padding: 5mm 4.5mm 4mm; position: relative; }
+  .price.main { border: 2px solid var(--blue); background: linear-gradient(180deg, #f5f8ff, #fff); }
+  .price .ribbon { position: absolute; top: -10px; left: 5mm; background: var(--blue); color: #fff; font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 12px; }
+  .price h3 { margin: 0 0 1mm; font-size: 14px; }
+  .price .amount { font-size: 28px; font-weight: 800; letter-spacing: -.02em; }
+  .price .amount small { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .price ul { margin: 3mm 0 0; padding-left: 16px; font-size: 11.5px; line-height: 1.55; color: #333; }
+
+  .contact { background: var(--ink); color: #fff; padding: 7mm 15mm; display: flex; justify-content: space-between; align-items: center; gap: 8mm; }
+  .contact .call { font-size: 17px; font-weight: 700; }
+  .contact .call span { display: block; font-size: 12px; font-weight: 400; color: #b6bac4; margin-top: 2px; }
+  .contact .who { text-align: right; font-size: 13px; line-height: 1.6; }
+  .contact .who b { font-size: 15px; }
+</style>
+</head>
+<body>
+
+<!-- ========================= RECTO ========================= -->
+<section class="page">
+  <div class="hero">
+    <div class="brand">
+      <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2962ff"/><rect x="10" y="14" width="44" height="32" rx="5" fill="#131722" stroke="#fff" stroke-width="3"/><polyline points="17,38 25,30 31,34 41,23" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="35.5,22.5 41.5,22.5 41.5,28.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="22" y="50" width="20" height="3.5" rx="1.75" fill="#fff" opacity=".85"/></svg>
+      <b>Ardoise</b>
+    </div>
+    <h1>Vos devis et factures en <em>2 minutes</em>.<br>Prêt pour la facture électronique.</h1>
+    <p class="lead">Le logiciel simple des commerçants et producteurs du coin : vous créez vos devis et factures, vous voyez qui vous doit de l'argent, et vos factures sont déjà au format officiel exigé à partir de 2027.</p>
+    <span class="tag">Payé une fois · Sans abonnement obligatoire · Installé chez vous</span>
+    <img class="shot" src="img/tableau-de-bord.png" alt="Tableau de bord d'Ardoise">
+  </div>
+
+  <div class="content">
+    <div class="benefits">
+      <div class="benefit">
+        <div class="ico" style="background:#e8eeff">⏱</div>
+        <h3>Gagnez du temps</h3>
+        <p>Vos produits et vos clients sont enregistrés : une facture se fait en quelques clics, un devis devient une facture en un seul.</p>
+      </div>
+      <div class="benefit">
+        <div class="ico" style="background:#e3f5f1">💶</div>
+        <h3>Soyez payé plus vite</h3>
+        <p>Les retards de paiement sautent aux yeux. Les lettres de relance sont déjà rédigées : il ne reste qu'à cliquer.</p>
+      </div>
+      <div class="benefit">
+        <div class="ico" style="background:#fde9eb">✅</div>
+        <h3>Restez dans les règles</h3>
+        <p>Numérotation sans trou, mentions obligatoires ajoutées automatiquement, factures au format Factur-X.</p>
+      </div>
+    </div>
+
+    <div class="reform">
+      <div>
+        <h2><small>Ce qui change</small>La facture électronique devient obligatoire</h2>
+        <p>Toutes les entreprises vont devoir passer à la facture électronique : un simple PDF fait sur Word ou Excel ne suffira bientôt plus pour facturer un professionnel.</p>
+        <p><span class="check">✔ Avec Ardoise</span>, chaque facture est générée au <b>format officiel Factur-X (norme européenne EN 16931)</b>, lisible par l'humain et par la machine, prête à être déposée sur votre plateforme agréée.</p>
+      </div>
+      <div class="timeline">
+        <div class="step done"><b>Septembre 2026</b>Toutes les entreprises doivent pouvoir <b style="display:inline;font-size:12px">recevoir</b> des factures électroniques.</div>
+        <div class="step"><b>Septembre 2027</b>Les TPE, PME et micro-entreprises doivent <b style="display:inline;font-size:12px">émettre</b> leurs factures aux professionnels en format électronique.</div>
+        <div class="step" style="margin-bottom:0"><b>Dès aujourd'hui</b>Ardoise vous y prépare, sans changer vos habitudes.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= VERSO ========================= -->
+<section class="page">
+  <div class="content p2">
+    <h2><small>Tout ce qu'il faut, rien de compliqué</small>Ce que fait Ardoise</h2>
+    <div class="features">
+      <div class="feat"><div class="dot">1</div><div><b>Devis et factures</b><span>Prix HT ou TTC, plusieurs taux de TVA, remises. Le devis accepté devient une facture en un clic.</span></div></div>
+      <div class="feat"><div class="dot">2</div><div><b>PDF professionnel avec votre logo</b><span>Prêt à envoyer par e-mail ou à imprimer.</span></div></div>
+      <div class="feat"><div class="dot">3</div><div><b>Suivi des paiements</b><span>Paiements partiels, reste dû, factures en retard mises en évidence.</span></div></div>
+      <div class="feat"><div class="dot">4</div><div><b>Relances en un clic</b><span>3 modèles de lettre, du rappel aimable à la dernière relance.</span></div></div>
+      <div class="feat"><div class="dot">5</div><div><b>Tableau de bord</b><span>Chiffre d'affaires du mois, évolution sur 12 mois, meilleurs clients.</span></div></div>
+      <div class="feat"><div class="dot">6</div><div><b>Export pour le comptable</b><span>Journal des ventes avec la TVA par taux, encaissements, en fichier Excel.</span></div></div>
+      <div class="feat"><div class="dot">7</div><div><b>Avoirs et numérotation légale</b><span>Une facture validée ne peut plus être modifiée : les corrections passent par un avoir.</span></div></div>
+      <div class="feat"><div class="dot">8</div><div><b>Vos données restent chez vous</b><span>Pas de compte en ligne, fonctionne sans Internet, sauvegarde sur clé USB.</span></div></div>
+    </div>
+
+    <div class="duo">
+      <div>
+        <h2 style="font-size:16px"><small>Pour qui ?</small>Pensé pour les commerces de proximité</h2>
+        <div class="trades">
+          <span>🍎 Cidreries &amp; producteurs</span><span>💐 Fleuristes</span><span>🥩 Boucheries</span><span>🧀 Épiceries fines</span><span>🍽 Traiteurs</span><span>🥖 Boulangeries</span><span>🍷 Cavistes</span>
+        </div>
+        <p class="small">Pour facturer les restaurants, comités d'entreprise, épiceries, mariages et commandes de particuliers. Ardoise gère les taux de TVA des métiers de bouche (5,5 %, 10 %, 20 %) et la micro-entreprise (TVA non applicable).</p>
+        <p class="small" style="margin-top:2mm">Ardoise est un logiciel de facturation : il ne remplace pas votre caisse enregistreuse pour les ventes au comptoir.</p>
+      </div>
+      <img src="img/facture-pdf.png" alt="Exemple de facture PDF">
+    </div>
+
+    <h2><small>Tarifs</small>Simple et transparent</h2>
+    <div class="prices">
+      <div class="price main">
+        <span class="ribbon">Le plus choisi</span>
+        <h3>Licence Ardoise</h3>
+        <div class="amount">149 € <small>une seule fois</small></div>
+        <ul>
+          <li>Logiciel à vie, sans abonnement</li>
+          <li>Installation sur place</li>
+          <li>Saisie de votre logo, produits et clients</li>
+          <li>Prise en main de 30 minutes</li>
+          <li>Mises à jour pendant 1 an</li>
+        </ul>
+      </div>
+      <div class="price">
+        <h3>Option Sérénité</h3>
+        <div class="amount">5 € <small>/ mois</small></div>
+        <ul>
+          <li>Assistance par téléphone</li>
+          <li>Mises à jour en continu</li>
+          <li>Aide aux sauvegardes</li>
+          <li>Sans engagement</li>
+        </ul>
+      </div>
+      <div class="price">
+        <h3>Pack 2027</h3>
+        <div class="amount">99 € <small>une fois</small></div>
+        <ul>
+          <li>Choix de votre plateforme agréée</li>
+          <li>Ouverture et paramétrage du compte</li>
+          <li>Premier envoi de facture accompagné</li>
+        </ul>
+      </div>
+    </div>
+    <p class="small">Prix nets. Offre de lancement possible pour les premiers commerçants équipés.</p>
+  </div>
+
+  <div class="contact">
+    <div class="call">Démonstration gratuite de 10 minutes, chez vous.<span>Je passe vous montrer Ardoise avec vos propres produits.</span></div>
+    <div class="who">
+      <b>Votre nom</b><br>
+      06 00 00 00 00<br>
+      votre.email@exemple.fr
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
