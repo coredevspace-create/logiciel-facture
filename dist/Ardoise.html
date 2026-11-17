@@ -3,7 +3,7 @@
 <head>
   <!-- Ardoise 1.0.0 — fichier autonome généré le 2026-11-17 par build.js -->
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Ftng3mviG46qrIwBSOY70T9D6Ck+QPQEBj8j2WMRvjw=' 'sha256-0Blh1AMY6ojiufKD+dDdmZLff08gDejNerlT+nn4nis=' 'sha256-iD4eNIc3KtoPaKr9ipDnsYe2Ubtot60Ezl2QbeOHAas=' 'sha256-lBYAL3bndEK1G5DKF5MjM16IvNV2dSj2VClO3KufCck=' 'sha256-ZgM2cUbgw5TxDjpct+/L2MfjBAyjmp76AaGHFasNpA0=' 'sha256-Mb34I2+j2I4obJbZoFttWVjC2YDitf4nwimAuK2xy9M=' 'sha256-Tx1Fj9mjV14Hi54XtOU+MQPwpjdQsjkMc3IAyAIOf54=' 'sha256-M/vanvx81DDj513paVtcxBhpjpMIUB05FlIcXt/a5VQ='; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Ftng3mviG46qrIwBSOY70T9D6Ck+QPQEBj8j2WMRvjw=' 'sha256-0Blh1AMY6ojiufKD+dDdmZLff08gDejNerlT+nn4nis=' 'sha256-iD4eNIc3KtoPaKr9ipDnsYe2Ubtot60Ezl2QbeOHAas=' 'sha256-lBYAL3bndEK1G5DKF5MjM16IvNV2dSj2VClO3KufCck=' 'sha256-gstJFRbJW8PE2LxNFkR8Qq+gnz+DhtCW9udMmcLziWY=' 'sha256-Mb34I2+j2I4obJbZoFttWVjC2YDitf4nwimAuK2xy9M=' 'sha256-Tx1Fj9mjV14Hi54XtOU+MQPwpjdQsjkMc3IAyAIOf54=' 'sha256-M/vanvx81DDj513paVtcxBhpjpMIUB05FlIcXt/a5VQ='; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ardoise — Devis &amp; factures</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232962ff'/%3E%3Crect x='10' y='14' width='44' height='32' rx='5' fill='%23131722' stroke='%23fff' stroke-width='3'/%3E%3Cpolyline points='17,38 25,30 31,34 41,23' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='35.5,22.5 41.5,22.5 41.5,28.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='22' y='50' width='20' height='3.5' rx='1.75' fill='%23fff'/%3E%3C/svg%3E">
@@ -424,12 +424,13 @@ window.ARDOISE_CONFIG = {
  * elle peut être publiée sans risque. La clé privée correspondante reste chiffrée
  * dans le navigateur des administrateurs (page admin.html).
  *
- * Pour ajouter la clé : ouvrir admin.html → première installation → copier
- * la « clé publique » affichée et la coller ci-dessous (voir docs/licences.md).
+ * Ne jamais retirer une clé de cette liste : les licences déjà vendues avec elle
+ * cesseraient de fonctionner. Voir docs/licences.md.
  */
 window.ARDOISE_LICENCE = {
   publicKeys: [
-    // { kty: 'EC', crv: 'P-256', x: '…', y: '…' },
+    // Clé de Louis — installée le 17/11/2026 — empreinte 51:D1:A1:64:F0:8C
+    { kty: 'EC', crv: 'P-256', x: 'KMlYeFuU8XNMTPnhNekxz0kXql9B9D9IwnIfWiZckQE', y: 'WkeX-frLNL7rvmuw2FX3NUbQO46L2ZOBSuwo9vj9rNE' },
   ],
 };
 
