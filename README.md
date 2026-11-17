@@ -36,6 +36,19 @@ Le dépôt se déploie tel quel sur Vercel, sans build (Framework Preset : *Othe
 
 ## Fonctionnalités
 
+### Ce qui différencie Ardoise
+- **« Ce que vous pouvez vraiment dépenser »** : encaissements du mois, moins la TVA à reverser, moins la part à mettre de côté (taux micro-entreprise ou pourcentage libre). Alerte à l'approche du plafond micro-entreprise ou du seuil de franchise de TVA.
+- **Profil de paiement de chaque client** (délai moyen, retards, alerte « demandez un acompte ») et **prévision des encaissements** à 30 jours, corrigée du retard habituel de chaque client.
+- **Bons de livraison signés au doigt** sur téléphone ou tablette, puis **facture récapitulative du mois en un clic**.
+- **Précommandes** (Noël, fêtes, mariages) avec acompte, **liste de préparation du jour** imprimable, puis facture au retrait, acompte déduit.
+- **Marges** : coût d'achat par article, marge sur chaque facture, **clients les plus rentables**.
+- **Hausse de tarifs en 1 clic**, avec arrondi et courrier d'information aux clients professionnels.
+- **Partage du PDF** sur WhatsApp, par SMS ou par mail depuis le téléphone.
+- **Score « Prêt pour la facture électronique »** : ce qu'il reste à faire, point par point.
+- **Application installable** sur téléphone, tablette et ordinateur, qui **fonctionne sans réseau** (marché, tournée, cave).
+
+### Le reste
+
 - **Tableau de bord** : chiffre d'affaires, encaissements, reste dû, retards, courbe sur 12 mois, meilleurs clients.
 - **Devis** : suivi (envoyé, accepté, refusé, expiré) et **transformation en facture en un clic**.
 - **Factures** : brouillon modifiable, puis validation avec un **numéro définitif, continu et chronologique**. Une facture validée ne se modifie plus : les corrections passent par un **avoir**.

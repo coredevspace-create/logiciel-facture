@@ -314,5 +314,9 @@ window.ArdoiseDrive = (() => {
     'drive-disconnect': () => disconnect(),
   };
 
+  // Retour du réseau : on relance la sauvegarde automatique si des modifications attendent
+  window.addEventListener('online', () => { onLocalSave(); refresh(); });
+  window.addEventListener('offline', () => refresh());
+
   return { available, connect, backupNow, onLocalSave, needsReconnect, cardHTML, bindCard, actions, hasToken, _state: () => ({ token, tokenExp, lastHash }) };
 })();

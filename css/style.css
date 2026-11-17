@@ -228,6 +228,47 @@ table.lines .desc-input { margin-top: 4px; font-size: 12.5px; color: var(--text)
 .alert-box.info { background: var(--primary-soft); color: #9db8ff; }
 .alert-box.warn { background: var(--warn-soft); color: #ffb74d; }
 
+/* ---------- Indicateurs (trésorerie, prévision, score 2027) ---------- */
+.insights { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.insights .card { margin-bottom: 0; }
+.avail { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 2px 0 10px; }
+.stack { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--border-2); margin-bottom: 10px; }
+.stack span { display: block; height: 100%; }
+.kv { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.kv li { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.kv li:last-child { border-bottom: none; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; }
+.ceil { margin-top: 12px; }
+.ceil > div:first-child { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.bar-bg { height: 7px; border-radius: 4px; background: var(--border-2); overflow: hidden; }
+.bar-bg span { display: block; height: 100%; border-radius: 4px; }
+.warnc { color: var(--warn); }
+.fc { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.fc li { display: grid; grid-template-columns: 1.3fr 1fr auto; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.fc li:last-child { border-bottom: none; }
+.fc-bar { height: 8px; background: var(--border-2); border-radius: 4px; overflow: hidden; }
+.fc-bar span { display: block; height: 100%; border-radius: 4px; min-width: 2px; }
+.ready { display: flex; gap: 14px; align-items: flex-start; }
+.ring { width: 86px; height: 86px; flex-shrink: 0; }
+.ready ul { list-style: none; margin: 0; padding: 0; font-size: 12.5px; }
+.ready li { padding: 3px 0; color: var(--muted); }
+.ready li.ok { color: var(--up); }
+.ready li a { color: var(--text-strong); }
+
+/* ---------- Bons de livraison, précommandes ---------- */
+.sig-pad { width: 100%; height: auto; aspect-ratio: 560 / 220; background: #fff; border-radius: 8px; border: 2px dashed #9aa3b5; touch-action: none; cursor: crosshair; display: block; }
+.sig-img { width: 100%; background: #fff; border-radius: 6px; margin-bottom: 6px; }
+.prep-list { list-style: none; margin: 4px 0 8px; padding: 0; }
+.prep-list li { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-strong); }
+.prep-list .box { width: 16px; height: 16px; border: 2px solid var(--muted); border-radius: 3px; flex-shrink: 0; }
+@media (max-width: 1100px) { .insights { grid-template-columns: 1fr 1fr; } .insights .card:first-child { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .insights { grid-template-columns: 1fr; } }
+@media print {
+  .prep { break-inside: avoid; border: 1px solid #999 !important; background: #fff !important; color: #000 !important; }
+  .card, .card h2, .prep-list li, td, th { color: #000 !important; background: #fff !important; }
+  .prep-list .box { border-color: #000; }
+}
+
 /* ---------- Carte Google Drive ---------- */
 .drive-status { list-style: none; margin: 0; padding: 0; font-size: 13.5px; max-width: 520px; }
 .drive-status li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }

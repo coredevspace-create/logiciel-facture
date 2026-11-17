@@ -6,6 +6,11 @@
   <title>Ardoise — Devis &amp; factures</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232962ff'/%3E%3Crect x='10' y='14' width='44' height='32' rx='5' fill='%23131722' stroke='%23fff' stroke-width='3'/%3E%3Cpolyline points='17,38 25,30 31,34 41,23' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='35.5,22.5 41.5,22.5 41.5,28.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='22' y='50' width='20' height='3.5' rx='1.75' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+  <meta name="theme-color" content="#131722">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
   <header class="topbar no-print">
@@ -23,6 +28,8 @@
       <a href="#/tableau" data-route="tableau">Tableau de bord</a>
       <a href="#/devis" data-route="devis">Devis</a>
       <a href="#/factures" data-route="factures">Factures</a>
+      <a href="#/livraisons" data-route="livraisons">Livraisons</a>
+      <a href="#/precommandes" data-route="precommandes">Précommandes</a>
       <a href="#/clients" data-route="clients">Clients</a>
       <a href="#/catalogue" data-route="catalogue">Catalogue</a>
       <a href="#/parametres" data-route="parametres">Mon entreprise</a>
@@ -59,6 +66,8 @@
   <script src="js/licence-config.js"></script>
   <script src="js/facturx.js"></script>
   <script src="js/drive.js"></script>
+  <script src="js/insights.js"></script>
+  <script src="js/livraisons.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

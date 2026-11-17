@@ -239,7 +239,7 @@ function pdfReady() {
 
 // Sans licence active (mode démonstration), pas de Factur-X : seulement un PDF filigrané.
 const licensed = () => typeof isLicensed === 'function' && isLicensed();
-const isFacturX = (doc) => doc.kind !== 'quote' && doc.status === 'issued' && licensed();
+const isFacturX = (doc) => ['invoice', 'credit'].includes(doc.kind) && doc.status === 'issued' && licensed();
 
 async function buildPdf(doc) {
   const { PDFDocument, rgb, degrees, PDFName, PDFString, PDFHexString } = window.PDFLib;
@@ -328,7 +328,7 @@ async function buildPdf(doc) {
   const sellerLines = [S.address, [S.zip, S.city].filter(Boolean).join(' '), S.phone ? 'Tél. ' + S.phone : '', S.email, S.website].filter(Boolean);
   for (const l of sellerLines) { text(l, M, leftY, { size: 9 }); leftY -= 12; }
 
-  const titleWord = { quote: 'DEVIS', invoice: 'FACTURE', credit: 'AVOIR' }[doc.kind];
+  const titleWord = { quote: 'DEVIS', invoice: 'FACTURE', credit: 'AVOIR', delivery: 'BON DE LIVRAISON', order: 'BON DE COMMANDE' }[doc.kind];
   let rightY = y - 20;
   text(titleWord, W - M, rightY, { font: B, size: 22, align: 'right' });
   rightY -= 20;
@@ -338,6 +338,7 @@ async function buildPdf(doc) {
   ];
   if (doc.kind === 'invoice') metaRight.push(['Échéance : ', doc.dueDate && doc.dueDate !== doc.date ? fmtDate(doc.dueDate) : 'à réception']);
   if (isQuote) metaRight.push(["Valable jusqu'au : ", fmtDate(doc.dueDate)]);
+  if (doc.kind === 'order') metaRight.push(['Retrait : ', fmtDate(doc.pickupDate) + (doc.pickupTime ? ' à ' + doc.pickupTime : '')]);
   for (const [k, v] of metaRight) {
     const wv = width(v, B, 9.5);
     text(v, W - M, rightY, { font: B, size: 9.5, align: 'right' });
@@ -359,7 +360,7 @@ async function buildPdf(doc) {
   const boxH = 26 + nameLines.length * 13 + clientLines.length * 12.5;
   page.drawRectangle({ x: boxX, y: y - boxH, width: boxW, height: boxH, borderColor: C.line, borderWidth: 0.8, color: rgb(1, 1, 1) });
   let by = y - 15;
-  text(isQuote ? 'Devis pour' : doc.kind === 'credit' ? 'Avoir pour' : 'Facturé à', boxX + 12, by, { size: 7.5, color: C.muted });
+  text({ quote: 'Devis pour', credit: 'Avoir pour', delivery: 'Livré à', order: 'Commande de' }[doc.kind] || 'Facturé à', boxX + 12, by, { size: 7.5, color: C.muted });
   by -= 14;
   for (const l of nameLines) { text(l, boxX + 12, by, { font: B, size: 10.5 }); by -= 13; }
   for (const l of clientLines) { text(l, boxX + 12, by, { size: 9.5 }); by -= 12.5; }
@@ -469,6 +470,24 @@ async function buildPdf(doc) {
     if (S.iban) para(`IBAN : ${S.iban}${S.bic ? '   BIC : ' + S.bic : ''}`, { size: 9, font: B });
     y -= 6;
   }
+  if (doc.kind === 'order' && num(doc.deposit) > 0) {
+    para(`Acompte versé le ${fmtDate(doc.depositDate)} : ${money(doc.deposit)}   —   Reste à payer au retrait : ${money(Math.max(0, t.ttc - num(doc.deposit)))}`, { size: 9.5, font: B });
+    y -= 6;
+  }
+  if (doc.kind === 'delivery') {
+    if (y - 100 < BOTTOM) newPage();
+    const bx = W - M - 250;
+    page.drawRectangle({ x: bx, y: y - 92, width: 250, height: 92, borderColor: C.line, borderWidth: 0.8 });
+    text(doc.signature ? `Reçu le ${doc.signedAt ? new Date(doc.signedAt).toLocaleDateString('fr-FR') : fmtDate(doc.date)}${doc.signedBy ? ' par ' + doc.signedBy : ''} :` : 'Reçu par le client (nom, date, signature) :', bx + 8, y - 13, { size: 8.5, color: C.muted });
+    if (doc.signature) {
+      try {
+        const img = await pdf.embedPng(dataUrlToBytes(doc.signature));
+        const k = Math.min(230 / img.width, 70 / img.height);
+        page.drawImage(img, { x: bx + 10, y: y - 88, width: img.width * k, height: img.height * k });
+      } catch (e) { /* signature illisible : ignorée */ }
+    }
+    y -= 106;
+  }
   if (isQuote) {
     if (y - 90 < BOTTOM) newPage();
     page.drawRectangle({ x: W - M - 230, y: y - 80, width: 230, height: 80, borderColor: C.line, borderWidth: 0.8 });
@@ -487,6 +506,8 @@ async function buildPdf(doc) {
     }
   }
   if (isQuote) mentions.push(`Devis gratuit, valable jusqu'au ${fmtDate(doc.dueDate)}.`);
+  if (doc.kind === 'delivery') mentions.push('Bon de livraison : ce document ne vaut pas facture. La facture correspondante sera émise séparément.');
+  if (doc.kind === 'order') mentions.push('Bon de commande : ce document ne vaut pas facture. Une facture vous sera remise au retrait.');
   if (mentions.length) {
     if (y - 20 < BOTTOM) newPage();
     hline(M, W - M, y + 4);
@@ -634,6 +655,26 @@ function pdfFilename(doc, ext = 'pdf') {
   const c = docClient(doc);
   const base = `${KIND_LABEL[doc.kind]}_${doc.number || 'brouillon'}_${c.name}`;
   return base.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9._-]+/g, '_').replace(/_+/g, '_').slice(0, 90) + '.' + ext;
+}
+
+// Partage du PDF (WhatsApp, SMS, Mail…) via le menu de partage du téléphone ou de l'ordinateur
+async function sharePdf(doc) {
+  if (!pdfReady()) { toast('Module PDF indisponible.', 'error'); return; }
+  try {
+    const bytes = await buildPdf(doc);
+    const file = new File([bytes], pdfFilename(doc), { type: 'application/pdf' });
+    const c = docClient(doc);
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: file.name, text: `${KIND_LABEL[doc.kind]} ${doc.number || ''} — ${DB.settings.name || APP.name}`.trim() });
+      return;
+    }
+    download(file.name, file);
+    toast(`Partage direct non disponible sur cet appareil : le PDF est téléchargé, joignez-le à votre message${c.phone ? ' pour ' + c.phone : ''}.`);
+  } catch (e) {
+    if (e && e.name === 'AbortError') return; // partage annulé par l'utilisateur
+    console.error(e);
+    toast('Partage impossible : ' + e.message, 'error');
+  }
 }
 
 async function downloadPdf(doc) {

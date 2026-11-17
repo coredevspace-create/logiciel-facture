@@ -16,7 +16,7 @@ const VAT_RATES = [20, 10, 5.5, 2.1, 0];
 const UNITS = ['unité', 'pièce', 'kg', 'g', 'litre', 'bouteille', 'carton', 'lot', 'botte', 'bouquet', 'composition', 'heure', 'jour', 'forfait'];
 const PAYMENT_METHODS = ['Virement', 'Chèque', 'Espèces', 'Carte bancaire', 'Prélèvement', 'Autre'];
 const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-const KIND_LABEL = { quote: 'Devis', invoice: 'Facture', credit: 'Avoir' };
+const KIND_LABEL = { quote: 'Devis', invoice: 'Facture', credit: 'Avoir', delivery: 'Bon de livraison', order: 'Bon de commande' };
 const OPERATION_LABEL = { biens: 'Livraison de biens', services: 'Prestation de services', mixte: 'Livraison de biens et prestation de services' };
 
 /* =====================================================================
@@ -39,11 +39,19 @@ function defaultData() {
       latePenalty: "En cas de retard de paiement, pénalités au taux de 3 fois le taux d'intérêt légal.",
       footerNote: '',
       invoicePrefix: 'F', quotePrefix: 'D', creditPrefix: 'A',
+      // Trésorerie et facture électronique
+      socialRegime: 'none',         // voir SOCIAL_REGIMES (js/insights.js)
+      setAsideRate: 0,              // % libre à mettre de côté
+      caCeiling: 188700,            // plafond micro-entreprise (vente) — à vérifier chaque année
+      vatCeiling: 85000,            // seuil de franchise de TVA (vente) — à vérifier chaque année
+      paName: '',                   // plateforme agréée utilisée
     },
     counters: {},
     clients: [],
     products: [],
     documents: [],
+    deliveries: [], // bons de livraison (js/livraisons.js)
+    orders: [],     // précommandes (js/livraisons.js)
     lastBackup: null,
     licence: '', // clé de licence (voir licenceState)
     drive: null, // connexion Google Drive (voir js/drive.js)
@@ -84,6 +92,7 @@ function cleanSettings(raw, keepLogo) {
   }
   out.vatRegime = clean.oneOf(out.vatRegime, ['normal', 'franchise'], 'normal');
   out.priceMode = clean.oneOf(out.priceMode, ['HT', 'TTC'], 'TTC');
+  out.socialRegime = clean.oneOf(out.socialRegime, ['none', 'micro-vente', 'micro-services', 'micro-liberal', 'custom'], 'none');
   out.logo = keepLogo ? clean.logo(s.logo) : '';
   return out;
 }
@@ -114,7 +123,7 @@ function cleanDoc(raw) {
     franchise: clean.bool(d.franchise),
     lines: clean.arr(d.lines).slice(0, 1000).map((l) => {
       const x = clean.obj(l);
-      return { designation: clean.str(x.designation, 500), description: clean.str(x.description, 2000), qty: clean.num(x.qty), unit: clean.str(x.unit, 40), price: clean.num(x.price), vatRate: clean.num(x.vatRate), discount: clean.num(x.discount) };
+      return { designation: clean.str(x.designation, 500), description: clean.str(x.description, 2000), qty: clean.num(x.qty), unit: clean.str(x.unit, 40), price: clean.num(x.price), vatRate: clean.num(x.vatRate), discount: clean.num(x.discount), cost: Math.max(0, clean.num(x.cost)) };
     }),
     notes: clean.str(d.notes),
     payments: clean.arr(d.payments).map((p) => { const x = clean.obj(p); return { id: clean.id(x.id) || uid(), date: clean.date(x.date, today()), amount: clean.num(x.amount), method: clean.str(x.method, 60) }; }),
@@ -126,11 +135,28 @@ function cleanDoc(raw) {
   return out;
 }
 
+// Bons de livraison et précommandes : même nettoyage que les factures + champs propres
+function cleanSubDoc(raw, kind) {
+  const x = clean.obj(raw);
+  const base = cleanDoc({ ...x, kind: 'invoice', status: 'draft' });
+  const out = { id: base.id, kind, number: base.number, date: base.date, clientId: base.clientId, clientSnapshot: base.clientSnapshot,
+    lines: base.lines, priceMode: base.priceMode, franchise: base.franchise, notes: base.notes, invoiceId: clean.id(x.invoiceId) };
+  if (kind === 'delivery') {
+    Object.assign(out, { status: 'delivered', signature: typeof x.signature === 'string' && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(x.signature) && x.signature.length < 600000 ? x.signature : '',
+      signedBy: clean.str(x.signedBy, 120), signedAt: clean.iso(x.signedAt) });
+  } else {
+    Object.assign(out, { status: clean.oneOf(x.status, ['pending', 'ready', 'done', 'cancelled'], 'pending'), pickupDate: clean.date(x.pickupDate, base.date),
+      pickupTime: /^\d{2}:\d{2}$/.test(x.pickupTime) ? x.pickupTime : '', deposit: Math.max(0, clean.num(x.deposit)), depositDate: clean.date(x.depositDate, base.date),
+      depositMethod: clean.str(x.depositMethod, 60) });
+  }
+  return out;
+}
+
 function migrate(raw) {
   const d = clean.obj(raw);
   const counters = {};
   for (const [kind, years] of Object.entries(clean.obj(d.counters))) {
-    if (!['quote', 'invoice', 'credit'].includes(kind)) continue;
+    if (!['quote', 'invoice', 'credit', 'delivery', 'order'].includes(kind)) continue;
     counters[kind] = {};
     for (const [y, n] of Object.entries(clean.obj(years))) if (/^\d{4}$/.test(y)) counters[kind][y] = Math.max(0, Math.floor(clean.num(n)));
   }
@@ -142,9 +168,11 @@ function migrate(raw) {
     clients: clean.arr(d.clients).map(cleanClient),
     products: clean.arr(d.products).map((p) => {
       const x = clean.obj(p);
-      return { id: clean.id(x.id) || uid(), name: clean.str(x.name, 500), description: clean.str(x.description, 2000), unit: clean.str(x.unit, 40), price: clean.num(x.price), vatRate: clean.num(x.vatRate), priceMode: clean.oneOf(x.priceMode, ['HT', 'TTC'], 'HT') };
+      return { id: clean.id(x.id) || uid(), name: clean.str(x.name, 500), description: clean.str(x.description, 2000), unit: clean.str(x.unit, 40), price: clean.num(x.price), vatRate: clean.num(x.vatRate), priceMode: clean.oneOf(x.priceMode, ['HT', 'TTC'], 'HT'), cost: Math.max(0, clean.num(x.cost)) };
     }),
     documents: clean.arr(d.documents).map(cleanDoc),
+    deliveries: clean.arr(d.deliveries).map((x) => cleanSubDoc(x, 'delivery')),
+    orders: clean.arr(d.orders).map((x) => cleanSubDoc(x, 'order')),
     lastBackup: clean.iso(d.lastBackup),
     licence: typeof d.licence === 'string' && /^[A-Za-z0-9._-]{0,2000}$/.test(d.licence) ? d.licence : '',
     drive: d.drive ? { folderId: clean.id(drv.folderId), auto: drv.auto !== false, last: clean.iso(drv.last), connected: clean.bool(drv.connected) } : null,
@@ -304,7 +332,7 @@ const badge = (d) => { const s = statusInfo(d); return `<span class="badge b-${s
 function nextNumber(kind, dateISO) {
   const y = (dateISO || today()).slice(0, 4);
   const s = DB.settings;
-  const prefix = { quote: s.quotePrefix, invoice: s.invoicePrefix, credit: s.creditPrefix }[kind] || 'X';
+  const prefix = { quote: s.quotePrefix, invoice: s.invoicePrefix, credit: s.creditPrefix, delivery: 'BL', order: 'PC' }[kind] || 'X';
   DB.counters[kind] = DB.counters[kind] || {};
   const n = (DB.counters[kind][y] || 0) + 1;
   DB.counters[kind][y] = n;
@@ -504,7 +532,9 @@ function router() {
     const r = el.dataset.route;
     const active = r === route || (route === '' && r === 'tableau') ||
       (r === 'factures' && ['doc', 'modifier', 'nouveau'].includes(route) && currentKindIs(['invoice', 'credit'], route, a)) ||
-      (r === 'devis' && ['doc', 'modifier', 'nouveau'].includes(route) && currentKindIs(['quote'], route, a));
+      (r === 'devis' && ['doc', 'modifier', 'nouveau'].includes(route) && currentKindIs(['quote'], route, a)) ||
+      (r === 'livraisons' && /^livraison/.test(route || '')) ||
+      (r === 'precommandes' && (/^precommande/.test(route || '') || route === 'preparation'));
     el.classList.toggle('active', !!active);
   });
   renderTicker();
@@ -520,6 +550,8 @@ function router() {
     case 'modifier': startEdit(a); break;
     case 'doc': renderView(a); break;
     case 'brouillon': if (draft) renderEditor(!docById(draft.id)); else renderDashboard(); break;
+    case 'livraisons': case 'livraison': case 'livraison-edit': case 'precommandes': case 'precommande': case 'precommande-edit': case 'preparation':
+      ArdoiseLivraisons.routeTo(route, a); break;
     default: renderDashboard();
   }
   window.scrollTo(0, 0);
@@ -568,6 +600,10 @@ function renderBanner() {
     el.innerHTML = `<div class="banner error">⚠ Le navigateur bloque l'enregistrement des données. Utilisez Chrome, Edge ou Firefox en mode normal (pas en navigation privée).</div>`;
     return;
   }
+  if (navigator.onLine === false) {
+    el.innerHTML = `<div class="banner warn">📴 Vous êtes hors ligne : Ardoise continue de fonctionner normalement. ${DB.drive && DB.drive.connected ? 'La sauvegarde Google Drive reprendra au retour du réseau.' : ''}</div>`;
+    return;
+  }
   const hasDocs = DB.documents.length > 0;
   const old = !DB.lastBackup || daysBetween(DB.lastBackup.slice(0, 10), today()) >= 7;
   if (hasDocs && window.ArdoiseDrive && ArdoiseDrive.needsReconnect()) {
@@ -607,6 +643,8 @@ function renderDashboard() {
     byClient[k].v += (d.kind === 'credit' ? -1 : 1) * docTotals(d).ht;
   }
   const top = Object.values(byClient).sort((a, b) => b.v - a.v).slice(0, 5);
+  const topMargin = clientMargins().slice(0, 5);
+  const profiles = paymentProfiles();
 
   $('#main').innerHTML = `
     <div class="page-head">
@@ -627,6 +665,8 @@ function renderDashboard() {
       <div class="kpi ${s.late > 0 ? 'alert' : ''}"><div class="label">En retard de paiement</div><div class="value">${money(s.late)}</div><div class="sub">${s.lateCount} facture(s) à relancer</div></div>
     </div>
 
+    ${insightsHTML()}
+
     <div class="dash-grid">
       <div class="card">
         <div class="card-head">
@@ -645,14 +685,15 @@ function renderDashboard() {
           ${lateList.length ? `<ul>${lateList.map((d) => {
             const late = d.dueDate && d.dueDate < now ? daysBetween(d.dueDate, now) : 0;
             return `<li data-act="open" data-id="${d.id}">
-              <div><div class="w-name">${esc(docClient(d).name)}</div><div class="w-sub">${esc(d.number)} · ${late ? `<span class="down">${late} j de retard</span>` : `échéance ${fmtDate(d.dueDate)}`}</div></div>
+              <div><div class="w-name">${esc(docClient(d).name)}${profiles[d.clientId] && profiles[d.clientId].risk ? ' <span class="badge b-late" title="Retards fréquents">⚠</span>' : ''}</div><div class="w-sub">${esc(d.number)} · ${late ? `<span class="down">${late} j de retard</span>` : `échéance ${fmtDate(d.dueDate)}`}${profiles[d.clientId] && profiles[d.clientId].avgDays !== null ? ` · ${esc(profileText(profiles[d.clientId]).split(' · ')[0])}` : ''}</div></div>
               <div class="right"><div class="${late ? 'down' : 'strong'}">${money(remaining(d))}</div></div>
             </li>`;
           }).join('')}</ul>` : '<div class="empty">Aucune facture en attente 🎉</div>'}
         </div>
         <div class="card watch">
-          <div class="card-head"><h2>Meilleurs clients (12 mois)</h2></div>
-          ${top.length ? `<ul>${top.map((c, i) => `<li><div><span class="muted">${i + 1}.</span> <span class="w-name">${esc(c.name)}</span></div><div class="strong">${money(c.v)}</div></li>`).join('')}</ul>` : '<div class="empty">Pas encore de données</div>'}
+          <div class="card-head"><h2>${topMargin.length ? 'Clients les plus rentables' : 'Meilleurs clients'} (12 mois)</h2><span class="muted small">${topMargin.length ? 'marge' : 'CA HT'}</span></div>
+          ${(topMargin.length ? topMargin : top).length ? `<ul>${(topMargin.length ? topMargin : top).map((c, i) => `<li><div><span class="muted">${i + 1}.</span> <span class="w-name">${esc(c.name)}</span></div><div class="strong ${topMargin.length ? 'up' : ''}">${money(c.v)}</div></li>`).join('')}</ul>` : '<div class="empty">Pas encore de données</div>'}
+          ${topMargin.length ? '' : '<p class="muted small" style="margin:8px 0 0">Indiquez le coût d\'achat de vos articles (Catalogue) pour voir vos clients les plus rentables.</p>'}
         </div>
       </div>
     </div>`;
@@ -959,7 +1000,7 @@ function renderEditor(isNew) {
     if (!p) return;
     draft.lines.push({
       designation: p.name, description: p.description || '', qty: 1, unit: p.unit || 'unité',
-      price: productPriceFor(p, draft.priceMode, draft.franchise), vatRate: draft.franchise ? 0 : num(p.vatRate), discount: 0,
+      price: productPriceFor(p, draft.priceMode, draft.franchise), vatRate: draft.franchise ? 0 : num(p.vatRate), discount: 0, cost: num(p.cost),
     });
     addP.value = '';
     drawLines();
@@ -1107,6 +1148,7 @@ function renderView(id) {
         <a class="btn" href="#/${isQuote ? 'devis' : 'factures'}">← Retour</a>
         ${isEditable(d) ? `<a class="btn" href="#/modifier/${d.id}">✎ Modifier</a>` : ''}
         <button class="btn primary" data-act="pdf">⬇ ${isFacturX(d) ? 'PDF Factur-X' : 'Télécharger le PDF'}</button>
+        <button class="btn" data-act="share">📤 Partager</button>
         <button class="btn" data-act="print">⎙ Imprimer</button>
         <button class="btn" data-act="email">✉ Envoyer par e-mail</button>
       </div>
@@ -1119,6 +1161,7 @@ function renderView(id) {
           <ul>
             <li><span class="muted">Client</span><span class="strong">${esc(c.name)}</span></li>
             <li><span class="muted">Total TTC</span><span class="strong">${money(t.ttc)}</span></li>
+            ${(() => { const m = docMargin(d); return m ? `<li><span class="muted">Marge estimée${m.partial ? '*' : ''}</span><span class="${m.margin >= 0 ? 'up' : 'down'}">${money(m.margin)} (${m.rate} %)</span></li>` : ''; })()}
             ${isInv && issued ? `<li><span class="muted">Payé</span><span class="up">${money(paidAmount(d))}</span></li>
               ${creditedAmount(d) ? `<li><span class="muted">Avoirs</span><span>${money(creditedAmount(d))}</span></li>` : ''}
               <li><span class="muted">Reste dû</span><span class="${rem > 0 ? 'down' : 'up'} strong">${money(Math.max(0, rem))}</span></li>` : ''}
@@ -1158,6 +1201,7 @@ function renderView(id) {
 
   actions = {
     pdf: () => downloadPdf(d),
+    share: () => sharePdf(d),
     xml: () => downloadXml(d),
     print: () => printDoc(d),
     email: () => emailDoc(d),
@@ -1180,6 +1224,7 @@ function renderView(id) {
     delete: () => {
       if (!confirm(`Supprimer définitivement ${d.kind === 'quote' ? 'ce devis' : 'ce brouillon'} ?`)) return;
       DB.documents = DB.documents.filter((x) => x.id !== d.id);
+      ArdoiseLivraisons.releaseInvoice(d.id);
       DB.documents.forEach((x) => { if (x.invoiceId === d.id) { delete x.invoiceId; if (x.status === 'invoiced') x.status = 'accepted'; } });
       save();
       toast('Supprimé');
@@ -1322,10 +1367,12 @@ function emailDoc(d) {
     <label style="margin-top:10px">Message <textarea id="m-body" rows="8">${esc(body)}</textarea></label>
     <div class="modal-foot">
       <button class="btn" id="m-pdf">⎙ Télécharger le PDF</button>
+      <button class="btn" id="m-share">📤 Partager (WhatsApp, SMS…)</button>
       <button class="btn" id="m-copy">Copier le message</button>
       <button class="btn primary" id="m-open">✉ Ouvrir ma messagerie</button>
     </div>`, (root) => {
     $('#m-pdf', root).onclick = () => (pdfReady() ? downloadPdf(d) : printDoc(d));
+    $('#m-share', root).onclick = () => sharePdf(d);
     $('#m-copy', root).onclick = () => copyText($('#m-body', root).value);
     $('#m-open', root).onclick = () => {
       const href = `mailto:${$('#m-to', root).value.trim()}?subject=${encodeURIComponent($('#m-subject', root).value)}&body=${encodeURIComponent($('#m-body', root).value)}`;
@@ -1453,6 +1500,7 @@ function renderClients() {
   const list = DB.clients.slice().sort((a, b) => a.name.localeCompare(b.name))
     .filter((c) => !q || `${c.name} ${c.contact || ''} ${c.city || ''} ${c.email || ''}`.toLowerCase().includes(q));
   const ca = {}, due = {};
+  const prof = paymentProfiles();
   for (const d of DB.documents) {
     if (d.kind === 'quote' || d.status !== 'issued') continue;
     ca[d.clientId] = (ca[d.clientId] || 0) + (d.kind === 'credit' ? -1 : 1) * docTotals(d).ht;
@@ -1463,12 +1511,12 @@ function renderClients() {
     <div class="card">
       <div class="toolbar"><span class="muted small">${DB.clients.length} client(s)</span><input id="search" type="search" placeholder="Rechercher…" value="${esc(clientSearch)}"></div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Nom</th><th>Type</th><th>Ville</th><th>Contact</th><th class="num">CA total HT</th><th class="num">Reste dû</th><th></th></tr></thead>
+        <thead><tr><th>Nom</th><th>Type</th><th>Ville</th><th>Paiement</th><th class="num">CA total HT</th><th class="num">Reste dû</th><th></th></tr></thead>
         <tbody>${list.length ? list.map((c) => `<tr class="clickable" data-act="edit" data-id="${c.id}">
           <td class="strong">${esc(c.name)}</td>
           <td>${c.type === 'pro' ? '<span class="badge b-sent">Professionnel</span>' : '<span class="badge b-draft">Particulier</span>'}</td>
           <td>${esc(c.city || '')}</td>
-          <td class="muted">${esc([c.email, c.phone].filter(Boolean).join(' · '))}</td>
+          <td class="small">${prof[c.id] && prof[c.id].risk ? '<span class="badge b-late">⚠ Retards fréquents</span> ' : ''}<span class="muted">${esc(profileText(prof[c.id]) || '—')}</span>${prof[c.id] && prof[c.id].risk ? '<div class="small warnc">Conseil : demandez un acompte ou un paiement à la commande.</div>' : ''}</td>
           <td class="num">${money(ca[c.id] || 0)}</td>
           <td class="num ${(due[c.id] || 0) > 0 ? 'down' : ''}">${(due[c.id] || 0) > 0 ? money(due[c.id]) : '—'}</td>
           <td class="nowrap right"><a class="btn small" href="#/nouveau/invoice/${c.id}" data-stop>+ Facture</a> <a class="btn small" href="#/nouveau/quote/${c.id}" data-stop>+ Devis</a></td>
@@ -1549,27 +1597,75 @@ function renderCatalogue() {
   const q = productSearch.trim().toLowerCase();
   const list = DB.products.slice().sort((a, b) => a.name.localeCompare(b.name)).filter((p) => !q || p.name.toLowerCase().includes(q));
   $('#main').innerHTML = `
-    <div class="page-head"><h1>Catalogue</h1><div class="actions"><button class="btn primary" data-act="add">+ Nouvel article</button></div></div>
+    <div class="page-head"><h1>Catalogue</h1><div class="actions"><button class="btn" data-act="raise" ${DB.products.length ? '' : 'disabled'}>📈 Augmenter les prix</button><button class="btn primary" data-act="add">+ Nouvel article</button></div></div>
     <div class="alert-box info">Taux de TVA courants (à confirmer avec votre comptable) : <b>viande, boucherie, charcuterie, jus de fruits</b> 5,5 % · <b>fleurs coupées, plantes</b> 10 % · <b>cidre, pommeau, calvados et autres boissons alcoolisées</b> 20 % · <b>prestations de décoration, livraison facturée à part</b> 20 %.</div>
     <div class="card">
       <div class="toolbar"><span class="muted small">${DB.products.length} article(s)</span><input id="search" type="search" placeholder="Rechercher…" value="${esc(productSearch)}"></div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Article</th><th>Unité</th><th class="num">Prix HT</th><th class="num">TVA</th><th class="num">Prix TTC</th></tr></thead>
+        <thead><tr><th>Article</th><th>Unité</th><th class="num">Prix HT</th><th class="num">TVA</th><th class="num">Prix TTC</th><th class="num">Coût d'achat HT</th><th class="num">Marge</th></tr></thead>
         <tbody>${list.length ? list.map((p) => `<tr class="clickable" data-act="edit" data-id="${p.id}">
           <td><span class="strong">${esc(p.name)}</span>${p.description ? `<div class="muted small">${esc(p.description)}</div>` : ''}</td>
           <td>${esc(p.unit)}</td>
           <td class="num">${money(productPriceFor(p, 'HT'))}</td>
           <td class="num">${fmtRate(num(p.vatRate))}</td>
           <td class="num strong">${money(productPriceFor(p, 'TTC'))}</td>
-        </tr>`).join('') : `<tr><td colspan="5" class="empty">${q ? 'Aucun résultat.' : 'Ajoutez vos produits et prestations pour les retrouver en un clic dans vos devis et factures.'}</td></tr>`}</tbody>
+          <td class="num muted">${num(p.cost) ? money(p.cost) : '—'}</td>
+          <td class="num">${num(p.cost) && productPriceFor(p, 'HT') ? `<span class="${productPriceFor(p, 'HT') - num(p.cost) >= 0 ? 'up' : 'down'}">${Math.round(((productPriceFor(p, 'HT') - num(p.cost)) / productPriceFor(p, 'HT')) * 100)} %</span>` : '—'}</td>
+        </tr>`).join('') : `<tr><td colspan="7" class="empty">${q ? 'Aucun résultat.' : 'Ajoutez vos produits et prestations pour les retrouver en un clic dans vos devis et factures.'}</td></tr>`}</tbody>
       </table></div>
     </div>`;
   actions = {
     add: () => openProductModal(null),
     edit: (el) => openProductModal(DB.products.find((p) => p.id === el.dataset.id)),
+    raise: () => openRaiseModal(),
   };
   const s = $('#search');
   s.addEventListener('input', () => { productSearch = s.value; const p = s.selectionStart; renderCatalogue(); const n = $('#search'); n.focus(); n.setSelectionRange(p, p); });
+}
+
+// Hausse de tarifs en un clic, avec arrondi et courrier d'information aux clients professionnels
+function openRaiseModal() {
+  const roundTo = (v, step) => (step ? Math.round(v / step) * step : v);
+  openModal('Augmenter les prix', `
+    <div class="grid3">
+      <label>Hausse (%) <input id="r-pct" type="number" step="0.1" value="3"></label>
+      <label>Arrondir les prix à <select id="r-round"><option value="0.05">0,05 €</option><option value="0.1" selected>0,10 €</option><option value="0.5">0,50 €</option><option value="0">pas d'arrondi</option></select></label>
+      <label>Date d'effet <input id="r-date" type="date" value="${today().slice(0, 4)}-${String(new Date().getMonth() + 2 > 12 ? 1 : new Date().getMonth() + 2).padStart(2, '0')}-01"></label>
+    </div>
+    <p class="hint">Les prix sont arrondis dans le mode où ils sont saisis (prix en boutique TTC ou prix HT). Les factures déjà émises ne changent pas.</p>
+    <div id="r-preview" class="table-wrap" style="max-height:240px;overflow:auto;margin-top:8px"></div>
+    <div class="modal-foot"><button class="btn" data-close>Annuler</button><button class="btn primary" id="r-ok">Appliquer la hausse</button></div>`, (root) => {
+    const compute = () => {
+      const pct = num($('#r-pct', root).value), step = num($('#r-round', root).value);
+      return DB.products.map((p) => ({ p, from: num(p.price), to: r2(roundTo(num(p.price) * (1 + pct / 100), step)) }));
+    };
+    const draw = () => {
+      $('#r-preview', root).innerHTML = `<table><thead><tr><th>Article</th><th class="num">Avant</th><th class="num">Après</th></tr></thead><tbody>${compute().map((x) => `<tr><td>${esc(x.p.name)}</td><td class="num muted">${money(x.from)} ${x.p.priceMode}</td><td class="num strong">${money(x.to)} ${x.p.priceMode}</td></tr>`).join('')}</tbody></table>`;
+    };
+    ['#r-pct', '#r-round'].forEach((sel) => $(sel, root).addEventListener('input', draw));
+    draw();
+    $('#r-ok', root).onclick = () => {
+      const pct = num($('#r-pct', root).value);
+      if (!pct || !confirm(`Augmenter les ${DB.products.length} prix du catalogue de ${String(pct).replace('.', ',')} % ?`)) return;
+      const changes = compute();
+      changes.forEach((x) => { x.p.price = x.to; });
+      save();
+      const eff = $('#r-date', root).value;
+      const S = DB.settings;
+      const pros = DB.clients.filter((c) => c.type === 'pro' && c.email);
+      const letter = `Bonjour,\n\nNous vous informons qu'à compter du ${fmtDate(eff)}, nos tarifs évolueront de ${String(pct).replace('.', ',')} %, afin de tenir compte de la hausse de nos coûts de production.\n\nVoici nos nouveaux prix :\n${changes.map((x) => `- ${x.p.name} : ${money(x.to)} ${x.p.priceMode}`).join('\n')}\n\nNous restons à votre disposition pour toute question et vous remercions pour votre fidélité.\n\nCordialement,\n${S.name}${S.phone ? '\n' + S.phone : ''}`;
+      openModal('Prévenir vos clients professionnels', `
+        <div class="alert-box info">✔ Prix mis à jour. Pensez à prévenir vos clients professionnels avant la date d'effet.</div>
+        <label>Courrier d'information <textarea id="r-letter" rows="12">${esc(letter.replace(/\\n/g, '\n'))}</textarea></label>
+        <p class="small muted">${pros.length} client(s) professionnel(s) avec une adresse e-mail.</p>
+        <div class="modal-foot"><button class="btn" id="r-copy">Copier le texte</button>${pros.length ? '<button class="btn primary" id="r-mail">✉ Ouvrir ma messagerie</button>' : ''}</div>`, (r2root) => {
+        $('#r-copy', r2root).onclick = () => copyText($('#r-letter', r2root).value);
+        const m = $('#r-mail', r2root);
+        if (m) m.onclick = () => { window.location.href = `mailto:?bcc=${pros.map((c) => encodeURIComponent(c.email)).join(',')}&subject=${encodeURIComponent('Évolution de nos tarifs')}&body=${encodeURIComponent($('#r-letter', r2root).value)}`; };
+      });
+      renderCatalogue();
+    };
+  });
 }
 
 function openProductModal(product) {
@@ -1582,15 +1678,19 @@ function openProductModal(product) {
       <label>Taux de TVA <select id="pr-vat">${VAT_RATES.map((r) => `<option value="${r}" ${num(p.vatRate) === r ? 'selected' : ''}>${fmtRate(r)}</option>`).join('')}</select></label>
       <label>Prix <input id="pr-price" type="number" step="0.01" value="${p.price}"></label>
       <label>Ce prix est <select id="pr-mode"><option value="TTC" ${p.priceMode === 'TTC' ? 'selected' : ''}>TTC (prix affiché en boutique)</option><option value="HT" ${p.priceMode === 'HT' ? 'selected' : ''}>HT</option></select></label>
-      <div class="span2 muted small" id="pr-conv"></div>
+      <label>Coût d'achat ou de revient HT (facultatif) <input id="pr-cost" type="number" step="0.01" min="0" value="${num(p.cost) || ''}" placeholder="pour calculer votre marge"></label>
+      <div class="muted small" id="pr-conv" style="align-self:end"></div>
     </div>
     <div class="modal-foot">
       ${product ? '<button class="btn danger" id="pr-del" style="margin-right:auto">Supprimer</button>' : ''}
       <button class="btn" data-close>Annuler</button><button class="btn primary" id="pr-ok">Enregistrer</button>
     </div>`, (root) => {
-    const read = () => ({ name: $('#pr-name', root).value.trim(), description: $('#pr-desc', root).value.trim(), unit: $('#pr-unit', root).value.trim() || 'unité', vatRate: num($('#pr-vat', root).value), price: num($('#pr-price', root).value), priceMode: $('#pr-mode', root).value });
-    const conv = () => { const x = read(); $('#pr-conv', root).textContent = `Soit ${money(productPriceFor(x, 'HT'))} HT · ${money(productPriceFor(x, 'TTC'))} TTC`; };
-    ['#pr-price', '#pr-vat', '#pr-mode'].forEach((s) => $(s, root).addEventListener('input', conv));
+    const read = () => ({ name: $('#pr-name', root).value.trim(), description: $('#pr-desc', root).value.trim(), unit: $('#pr-unit', root).value.trim() || 'unité', vatRate: num($('#pr-vat', root).value), price: num($('#pr-price', root).value), priceMode: $('#pr-mode', root).value, cost: Math.max(0, num($('#pr-cost', root).value)) });
+    const conv = () => {
+      const x = read(), ht = productPriceFor(x, 'HT');
+      $('#pr-conv', root).textContent = `Soit ${money(ht)} HT · ${money(productPriceFor(x, 'TTC'))} TTC${x.cost && ht ? ` · marge ${money(ht - x.cost)} (${Math.round(((ht - x.cost) / ht) * 100)} %)` : ''}`;
+    };
+    ['#pr-price', '#pr-vat', '#pr-mode', '#pr-cost'].forEach((s) => $(s, root).addEventListener('input', conv));
     conv();
     $('#pr-ok', root).onclick = () => {
       const data = read();
@@ -1673,6 +1773,18 @@ function renderSettings() {
       </div>
     </div>
 
+    <div class="card"><h2>Trésorerie et facture électronique</h2>
+      <div class="grid3">
+        <label class="span2">Part à mettre de côté sur vos recettes
+          <select id="s-socialRegime">${Object.entries(SOCIAL_REGIMES).map(([k, v]) => `<option value="${k}" ${s.socialRegime === k ? 'selected' : ''}>${esc(v.label)}</option>`).join('')}</select>
+          <div class="hint">Utilisé pour « Ce que vous pouvez vraiment dépenser ». Taux micro-entreprise indicatifs, à vérifier sur autoentrepreneur.urssaf.fr.</div></label>
+        <label>Pourcentage libre (%) <input id="s-setAsideRate" type="number" step="0.1" min="0" max="90" value="${esc(s.setAsideRate)}"><div class="hint">Si « Autre » est choisi.</div></label>
+        <label>Plafond micro-entreprise (€) <input id="s-caCeiling" type="number" step="100" min="0" value="${esc(s.caCeiling)}"><div class="hint">Vente : 188 700 € · services : 77 700 € (à vérifier chaque année).</div></label>
+        <label>Seuil de franchise de TVA (€) <input id="s-vatCeiling" type="number" step="100" min="0" value="${esc(s.vatCeiling)}"><div class="hint">Vente : 85 000 € · services : 37 500 € (à vérifier chaque année).</div></label>
+        ${f('paName', 'Plateforme agréée utilisée', { ph: 'ex : Indy, Tiime, Pennylane…', hint: 'Obligatoire pour recevoir vos factures depuis septembre 2026. <a href="https://www.impots.gouv.fr/je-passe-la-facturation-electronique" target="_blank" rel="noopener">Liste officielle</a>' })}
+      </div>
+    </div>
+
     <div class="card"><h2>Numérotation</h2>
       <div class="grid3">
         ${f('invoicePrefix', 'Préfixe factures', { hint: 'ex : F → F-2026-0001' })}
@@ -1681,6 +1793,8 @@ function renderSettings() {
       </div>
       <p class="hint">La numérotation est continue et chronologique, sans trou, comme l'exige la loi. Elle repart à 1 chaque année.</p>
     </div>
+
+    <div class="card" id="install-card"><h2>📱 Installer Ardoise sur cet appareil</h2>${installCardBody()}</div>
 
     <div class="card"><h2>Démonstration</h2>
       <p class="muted small">Pour présenter le logiciel à un client, chargez un exemple complet (cidrerie fictive). Cela remplace toutes les données actuelles.</p>
@@ -1721,6 +1835,14 @@ function renderSettings() {
       renderSettings();
     },
     'del-logo': () => { saveSettingsForm(); DB.settings.logo = ''; save(); renderSettings(); },
+    install: async () => {
+      if (!deferredInstall) return;
+      deferredInstall.prompt();
+      const r = await deferredInstall.userChoice.catch(() => null);
+      deferredInstall = null;
+      if (r && r.outcome === 'accepted') toast('Ardoise est installée sur cet appareil');
+      const c = $('#install-card'); if (c) c.innerHTML = '<h2>📱 Installer Ardoise sur cet appareil</h2>' + installCardBody();
+    },
     demo: () => loadDemo(),
     reset: () => {
       if (!confirm('Effacer TOUTES les données (clients, factures, paramètres) ?\n\nFaites une sauvegarde avant si besoin.')) return;
@@ -1732,11 +1854,15 @@ function renderSettings() {
 
 function saveSettingsForm() {
   const s = DB.settings;
-  const text = ['name', 'legalForm', 'capital', 'address', 'zip', 'city', 'siret', 'registre', 'tvaIntra', 'email', 'phone', 'website', 'iban', 'bic', 'paymentMethods', 'latePenalty', 'footerNote', 'invoicePrefix', 'quotePrefix', 'creditPrefix'];
+  const text = ['paName', 'name', 'legalForm', 'capital', 'address', 'zip', 'city', 'siret', 'registre', 'tvaIntra', 'email', 'phone', 'website', 'iban', 'bic', 'paymentMethods', 'latePenalty', 'footerNote', 'invoicePrefix', 'quotePrefix', 'creditPrefix'];
   for (const k of text) { const el = $('#s-' + k); if (el) s[k] = el.value.trim(); }
   s.siret = s.siret.replace(/\s/g, '');
   s.invoicePrefix = s.invoicePrefix || 'F'; s.quotePrefix = s.quotePrefix || 'D'; s.creditPrefix = s.creditPrefix || 'A';
   s.vatRegime = $('#s-vatRegime').value;
+  s.socialRegime = $('#s-socialRegime').value;
+  s.setAsideRate = Math.max(0, Math.min(90, num($('#s-setAsideRate').value)));
+  s.caCeiling = Math.max(0, Math.round(num($('#s-caCeiling').value)));
+  s.vatCeiling = Math.max(0, Math.round(num($('#s-vatCeiling').value)));
   s.priceMode = $('#s-priceMode').value;
   s.defaultVat = num($('#s-defaultVat').value);
   s.vatOnDebits = $('#s-vatOnDebits').checked;
@@ -1893,6 +2019,37 @@ function exportClients() {
 /* =====================================================================
    Données de démonstration
    ===================================================================== */
+// Petite signature manuscrite pour l'exemple de démonstration
+function demoSignature() {
+  try {
+    const cv = document.createElement('canvas'); cv.width = 560; cv.height = 220;
+    const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 560, 220);
+    ctx.strokeStyle = '#15233f'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(60, 150);
+    for (let x = 60; x <= 470; x += 6) ctx.lineTo(x, 130 + Math.sin(x / 18) * 34 * Math.sin(x / 140) - (x > 300 ? (x - 300) / 6 : 0));
+    ctx.stroke(); ctx.beginPath(); ctx.moveTo(120, 175); ctx.quadraticCurveTo(280, 150, 440, 178); ctx.stroke();
+    return cv.toDataURL('image/png');
+  } catch (e) { return ''; }
+}
+
+/* =====================================================================
+   Application installable (téléphone, tablette, ordinateur) et hors ligne
+   ===================================================================== */
+let deferredInstall = null;
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstall = e; });
+
+function installCardBody() {
+  if (isStandalone()) return '<p class="small"><span class="up">✔ Ardoise est installée</span> et s\'ouvre comme une application, même sans réseau.</p>';
+  if (location.protocol === 'file:') return '<p class="small muted">Vous utilisez le fichier Ardoise installé sur cet ordinateur : il fonctionne déjà sans Internet. Pour l\'installer aussi sur votre téléphone, ouvrez la version en ligne d\'Ardoise sur le téléphone.</p>';
+  return `<p class="small">Ardoise s'installe comme une application : une icône sur l'écran d'accueil, et il <b>fonctionne même sans réseau</b> (marché, tournée, cave). Vos données restent sur l'appareil.</p>
+    ${deferredInstall ? '<button class="btn primary" data-act="install">Installer Ardoise</button>' : ''}
+    <ul class="small muted" style="margin:10px 0 0;padding-left:18px;line-height:1.7">
+      <li><b>iPhone / iPad</b> (Safari) : bouton Partager <span aria-hidden="true">⬆️</span> → « Sur l'écran d'accueil ».</li>
+      <li><b>Android</b> (Chrome) : menu ⋮ → « Installer l'application ».</li>
+      <li><b>Ordinateur</b> (Chrome, Edge) : icône d'installation à droite de la barre d'adresse.</li>
+    </ul>`;
+}
+
 function loadDemo() {
   if ((DB.documents.length || DB.clients.length) && !confirm("Charger l'exemple remplacera toutes les données actuelles. Continuer ?")) return;
   DB = defaultData();
@@ -1900,17 +2057,18 @@ function loadDemo() {
     name: 'Cidrerie du Verger', legalForm: 'EARL', capital: '7 500', address: '12 chemin des Pommiers', zip: '14340', city: 'Cambremer',
     siret: '12345678900012', registre: 'RCS Lisieux 123 456 789', tvaIntra: 'FR12123456789', email: 'contact@cidrerie-du-verger.fr',
     phone: '02 31 00 00 00', iban: 'FR76 1234 5678 9012 3456 7890 123', bic: 'AGRIFRPP', priceMode: 'HT', paymentDays: 30,
+    socialRegime: 'custom', setAsideRate: 20,
   });
-  const P = (name, unit, price, vatRate, description = '') => ({ id: uid(), name, unit, price, vatRate, priceMode: 'HT', description });
+  const P = (name, unit, price, vatRate, cost, description = '') => ({ id: uid(), name, unit, price, vatRate, priceMode: 'HT', description, cost });
   DB.products = [
-    P('Cidre brut fermier 75 cl', 'bouteille', 3.9, 20),
-    P('Cidre doux fermier 75 cl', 'bouteille', 3.9, 20),
-    P('Pommeau de Normandie 70 cl', 'bouteille', 12.5, 20),
-    P('Calvados Pays d\'Auge 3 ans 70 cl', 'bouteille', 24, 20),
-    P('Jus de pomme artisanal 1 L', 'bouteille', 2.6, 5.5),
-    P('Carton 6 bouteilles cidre brut', 'carton', 21.6, 20),
-    P('Coffret découverte (cidre, pommeau, jus)', 'unité', 22.5, 20, '1 cidre brut, 1 pommeau, 1 jus de pomme'),
-    P('Livraison', 'forfait', 15, 20),
+    P('Cidre brut fermier 75 cl', 'bouteille', 3.9, 20, 1.55),
+    P('Cidre doux fermier 75 cl', 'bouteille', 3.9, 20, 1.55),
+    P('Pommeau de Normandie 70 cl', 'bouteille', 12.5, 20, 5.2),
+    P('Calvados Pays d\'Auge 3 ans 70 cl', 'bouteille', 24, 20, 11),
+    P('Jus de pomme artisanal 1 L', 'bouteille', 2.6, 5.5, 1.1),
+    P('Carton 6 bouteilles cidre brut', 'carton', 21.6, 20, 9.3),
+    P('Coffret découverte (cidre, pommeau, jus)', 'unité', 22.5, 20, 10.4, '1 cidre brut, 1 pommeau, 1 jus de pomme'),
+    P('Livraison', 'forfait', 15, 20, 9),
   ];
   const C = (type, name, contact, address, zip, city, email, siren = '') => ({ id: uid(), type, name, contact, address, zip, city, email, phone: '', siren, tvaIntra: '', notes: '' });
   DB.clients = [
@@ -1920,7 +2078,7 @@ function loadDemo() {
     C('particulier', 'Mme Claire Dupont', '', '21 avenue des Tilleuls', '14000', 'Caen', 'claire.dupont@example.fr'),
   ];
   const [epicerie, resto, cse, dupont] = DB.clients;
-  const line = (p, qty) => ({ designation: p.name, description: p.description, qty, unit: p.unit, price: p.price, vatRate: p.vatRate, discount: 0 });
+  const line = (p, qty) => ({ designation: p.name, description: p.description, qty, unit: p.unit, price: p.price, vatRate: p.vatRate, discount: 0, cost: p.cost });
   const pr = DB.products;
   const base = new Date();
   const ago = (days) => { const d = new Date(base); d.setDate(d.getDate() - days); return isoDate(d); };
@@ -1956,6 +2114,24 @@ function loadDemo() {
   mk('quote', resto, 2, [line(pr[0], 48), line(pr[1], 24), line(pr[3], 3)], { status: 'draft', subject: 'Carte des boissons' });
   mk('invoice', resto, 0, [line(pr[0], 12)], { status: 'draft' });
   void i4;
+  // Bons de livraison du mois (restaurant livré chaque semaine), dont deux signés
+  const sig = demoSignature();
+  [[14, 'Restaurant La Marmite', true], [7, 'Restaurant La Marmite', true], [1, 'Restaurant La Marmite', false], [3, 'Épicerie Fine Le Panier Normand', false]].forEach(([days, , signed], k) => {
+    const client = k === 3 ? epicerie : resto;
+    const d = ago(days);
+    DB.deliveries.push({ id: uid(), kind: 'delivery', number: nextNumber('delivery', d), date: d, clientId: client.id, clientSnapshot: snapshotClient(client),
+      lines: k === 3 ? [line(pr[5], 6), line(pr[4], 12)] : [line(pr[0], 24), line(pr[1], 12), line(pr[4], 6)], priceMode: 'HT', franchise: false, notes: '',
+      invoiceId: '', status: 'delivered', signature: signed ? sig : '', signedBy: signed ? 'M. Bertin' : '', signedAt: signed ? new Date(base.getTime() - days * 86400000).toISOString() : null });
+  });
+  // Précommandes de fin d'année
+  const lefevre = { id: uid(), type: 'particulier', name: 'M. Paul Lefèvre', contact: '', address: '', zip: '14000', city: 'Caen', email: '', phone: '06 12 34 56 78', siren: '', tvaIntra: '', notes: '' };
+  const morel = { id: uid(), type: 'particulier', name: 'Famille Morel', contact: '', address: '', zip: '14340', city: 'Cambremer', email: '', phone: '06 98 76 54 32', siren: '', tvaIntra: '', notes: '' };
+  DB.clients.push(lefevre, morel);
+  const pickup = (n) => addDays(today(), n);
+  [[lefevre, 5, '10:30', [line(pr[6], 3), line(pr[3], 1)], 30], [morel, 5, '16:00', [line(pr[6], 6), line(pr[2], 2)], 50], [dupont, 6, '11:00', [line(pr[6], 2), line(pr[4], 6)], 0]].forEach(([client, n, time, lines, dep]) => {
+    DB.orders.push({ id: uid(), kind: 'order', number: nextNumber('order', today()), date: today(), clientId: client.id, clientSnapshot: snapshotClient(client), lines, priceMode: 'HT', franchise: false,
+      notes: client === morel ? 'Emballage cadeau pour les 6 coffrets' : '', invoiceId: '', status: 'pending', pickupDate: pickup(n), pickupTime: time, deposit: dep, depositDate: today(), depositMethod: dep ? 'Carte bancaire' : 'Espèces' });
+  });
   save();
   toast('Exemple de démonstration chargé');
   go('#/tableau');
@@ -1968,6 +2144,11 @@ load();
 document.title = `${APP.name} — ${APP.tagline}`;
 $$('.brand-name').forEach((el) => { el.textContent = APP.name; });
 window.addEventListener('hashchange', router);
+window.addEventListener('online', renderBanner);
+window.addEventListener('offline', renderBanner);
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
+  navigator.serviceWorker.register('sw.js').catch(() => { /* hors ligne indisponible : sans conséquence */ });
+}
 window.addEventListener('storage', (e) => { if (e.key === STORE_KEY) { load(); router(); } });
 // Lien « Essayer la démo » (app.html?demo=1) : charge l'exemple si le logiciel est encore vide
 if (new URLSearchParams(location.search).get('demo') === '1') {

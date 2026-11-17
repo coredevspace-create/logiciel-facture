@@ -14,6 +14,9 @@ const root = __dirname;
 const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 let html = read('app.html');
 
+// Le fichier unique fonctionne déjà hors ligne : pas de manifeste ni d'icône externe
+html = html.replace(/\s*<link rel="(manifest|apple-touch-icon)"[^>]*>/g, '');
+
 // <link rel="stylesheet" href="..."> → <style>…</style>
 html = html.replace(/<link rel="stylesheet" href="([^"]+)">/g, (_, href) => `<style>\n${read(href)}\n</style>`);
 
