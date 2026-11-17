@@ -86,6 +86,10 @@ python3 outils/valider-facturx.py
 
 Ardoise produit des factures au bon format. **Il n'est pas une plateforme agréée** : le commerçant dépose ses PDF Factur-X sur la plateforme qu'il a choisie.
 
+## Sécurité
+
+Aucune base de données centrale : les données restent chez le commerçant (navigateur et son propre Google Drive). Le logiciel est protégé contre l'injection de code (échappement, nettoyage de toutes les données chargées, CSP stricte), les fichiers de sauvegarde piégés et l'injection de formules dans les exports. Détails, tests et **liste des choses à verrouiller sur vos comptes** (GitHub, Vercel, Google) : [`docs/securite.md`](docs/securite.md).
+
 ## À savoir
 
 - Ardoise est un logiciel de **facturation**, pas un **logiciel de caisse** : les ventes au comptoir passent par une caisse certifiée.

@@ -53,15 +53,101 @@ function defaultData() {
 let DB = defaultData();
 let storageBroken = false;
 
-function migrate(d) {
-  const base = defaultData();
+/*
+ * Nettoyage et validation de TOUTES les données chargées (navigateur, fichier de
+ * sauvegarde, Google Drive). Un fichier piégé ne peut donc pas injecter de code :
+ * identifiants, dates, nombres, logo et listes de valeurs sont vérifiés un par un,
+ * et les textes libres sont échappés à l'affichage.
+ */
+const clean = {
+  id: (v) => String(v ?? '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64),
+  str: (v, max = 4000) => (v == null ? '' : String(v)).slice(0, max),
+  date: (v, def = '') => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : def),
+  iso: (v) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?Z$/.test(v) ? v : null),
+  num: (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; },
+  oneOf: (v, list, def) => (list.includes(v) ? v : def),
+  bool: (v) => v === true,
+  arr: (v) => (Array.isArray(v) ? v : []),
+  obj: (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {}),
+  logo: (v) => (typeof v === 'string' && v.length < 3000000 && /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(v) ? v : ''),
+};
+
+function cleanSettings(raw, keepLogo) {
+  const base = defaultData().settings;
+  const s = clean.obj(raw);
+  const out = {};
+  for (const k of Object.keys(base)) {
+    const def = base[k];
+    if (typeof def === 'number') out[k] = s[k] === undefined ? def : clean.num(s[k]);
+    else if (typeof def === 'boolean') out[k] = s[k] === undefined ? def : clean.bool(s[k]);
+    else out[k] = s[k] === undefined ? def : clean.str(s[k], 500);
+  }
+  out.vatRegime = clean.oneOf(out.vatRegime, ['normal', 'franchise'], 'normal');
+  out.priceMode = clean.oneOf(out.priceMode, ['HT', 'TTC'], 'TTC');
+  out.logo = keepLogo ? clean.logo(s.logo) : '';
+  return out;
+}
+
+function cleanClient(raw) {
+  const c = clean.obj(raw);
+  const out = { id: clean.id(c.id) || uid(), type: clean.oneOf(c.type, ['pro', 'particulier'], 'pro') };
+  for (const k of ['name', 'contact', 'address', 'zip', 'city', 'email', 'phone', 'siren', 'tvaIntra', 'notes']) out[k] = clean.str(c[k], 1000);
+  return out;
+}
+
+function cleanDoc(raw) {
+  const d = clean.obj(raw);
+  const out = {
+    id: clean.id(d.id) || uid(),
+    kind: clean.oneOf(d.kind, ['quote', 'invoice', 'credit'], 'invoice'),
+    number: d.number ? clean.str(d.number, 40) : null,
+    status: clean.oneOf(d.status, ['draft', 'sent', 'accepted', 'refused', 'invoiced', 'issued'], 'draft'),
+    date: clean.date(d.date, today()),
+    dueDate: clean.date(d.dueDate),
+    deliveryDate: clean.date(d.deliveryDate),
+    clientId: clean.id(d.clientId),
+    clientSnapshot: d.clientSnapshot ? cleanClient(d.clientSnapshot) : null,
+    subject: clean.str(d.subject, 500),
+    operation: clean.oneOf(d.operation, ['biens', 'services', 'mixte'], 'biens'),
+    deliveryAddress: clean.str(d.deliveryAddress, 500),
+    priceMode: clean.oneOf(d.priceMode, ['HT', 'TTC'], 'HT'),
+    franchise: clean.bool(d.franchise),
+    lines: clean.arr(d.lines).slice(0, 1000).map((l) => {
+      const x = clean.obj(l);
+      return { designation: clean.str(x.designation, 500), description: clean.str(x.description, 2000), qty: clean.num(x.qty), unit: clean.str(x.unit, 40), price: clean.num(x.price), vatRate: clean.num(x.vatRate), discount: clean.num(x.discount) };
+    }),
+    notes: clean.str(d.notes),
+    payments: clean.arr(d.payments).map((p) => { const x = clean.obj(p); return { id: clean.id(x.id) || uid(), date: clean.date(x.date, today()), amount: clean.num(x.amount), method: clean.str(x.method, 60) }; }),
+    reminders: clean.arr(d.reminders).map((r) => { const x = clean.obj(r); return { date: clean.date(x.date, today()), level: clean.oneOf(x.level, [1, 2, 3], 1) }; }),
+    createdAt: clean.iso(d.createdAt), updatedAt: clean.iso(d.updatedAt), validatedAt: clean.iso(d.validatedAt),
+  };
+  if (d.sellerSnapshot) out.sellerSnapshot = cleanSettings(d.sellerSnapshot, false);
+  for (const k of ['sourceId', 'invoiceId', 'invoiceRef']) if (d[k]) out[k] = clean.id(d[k]);
+  return out;
+}
+
+function migrate(raw) {
+  const d = clean.obj(raw);
+  const counters = {};
+  for (const [kind, years] of Object.entries(clean.obj(d.counters))) {
+    if (!['quote', 'invoice', 'credit'].includes(kind)) continue;
+    counters[kind] = {};
+    for (const [y, n] of Object.entries(clean.obj(years))) if (/^\d{4}$/.test(y)) counters[kind][y] = Math.max(0, Math.floor(clean.num(n)));
+  }
+  const drv = clean.obj(d.drive);
   return {
-    ...base, ...d,
-    settings: { ...base.settings, ...(d.settings || {}) },
-    counters: d.counters || {},
-    clients: Array.isArray(d.clients) ? d.clients : [],
-    products: Array.isArray(d.products) ? d.products : [],
-    documents: Array.isArray(d.documents) ? d.documents : [],
+    version: 1,
+    settings: cleanSettings(d.settings, true),
+    counters,
+    clients: clean.arr(d.clients).map(cleanClient),
+    products: clean.arr(d.products).map((p) => {
+      const x = clean.obj(p);
+      return { id: clean.id(x.id) || uid(), name: clean.str(x.name, 500), description: clean.str(x.description, 2000), unit: clean.str(x.unit, 40), price: clean.num(x.price), vatRate: clean.num(x.vatRate), priceMode: clean.oneOf(x.priceMode, ['HT', 'TTC'], 'HT') };
+    }),
+    documents: clean.arr(d.documents).map(cleanDoc),
+    lastBackup: clean.iso(d.lastBackup),
+    licence: typeof d.licence === 'string' && /^[A-Za-z0-9._-]{0,2000}$/.test(d.licence) ? d.licence : '',
+    drive: d.drive ? { folderId: clean.id(drv.folderId), auto: drv.auto !== false, last: clean.iso(drv.last), connected: clean.bool(drv.connected) } : null,
   };
 }
 
@@ -1757,7 +1843,12 @@ function exportBackup() {
 }
 
 const csvNum = (x) => r2(x).toFixed(2).replace('.', ',');
-const csvCell = (v) => { const s = String(v ?? ''); return /[;"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+// Neutralise les formules (=, +, -, @) pour éviter l'injection de formules à l'ouverture dans Excel
+const csvCell = (v) => {
+  let s = String(v ?? '');
+  if (/^[=+\-@\t\r]/.test(s) && !/^-?\d+(,\d+)?$/.test(s)) s = "'" + s;
+  return /[;"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
 function toCSV(rows) { return '﻿' + rows.map((r) => r.map(csvCell).join(';')).join('\r\n'); }
 
 function exportSales(period) {

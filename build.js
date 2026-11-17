@@ -23,6 +23,14 @@ html = html.replace(/<script src="([^"]+)"><\/script>/g, (_, src) => {
   return `<script>/* ${src} */\n${code}\n</script>`;
 });
 
+// Politique de sécurité (CSP) : seuls les scripts intégrés ci-dessus, identifiés par leur
+// empreinte SHA-256, peuvent s'exécuter. Tout script injecté serait bloqué par le navigateur.
+const crypto = require('crypto');
+const hashes = [];
+html.replace(/<script>([\s\S]*?)<\/script>/g, (_, code) => { hashes.push(`'sha256-${crypto.createHash('sha256').update(code, 'utf8').digest('base64')}'`); return _; });
+const csp = `default-src 'none'; script-src ${hashes.join(' ')}; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'`;
+html = html.replace('<meta charset="utf-8">', `<meta charset="utf-8">\n  <meta http-equiv="Content-Security-Policy" content="${csp}">`);
+
 const version = JSON.parse(read('package.json')).version;
 const stamp = new Date().toISOString().slice(0, 10);
 html = html.replace('<head>', `<head>\n  <!-- Ardoise ${version} — fichier autonome généré le ${stamp} par build.js -->`);
