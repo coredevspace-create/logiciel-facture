@@ -321,7 +321,7 @@
         <a href="#faq">Questions</a>
       </nav>
       <div class="nav-cta">
-        <a class="btn btn-ghost btn-sm" data-contact-mail href="#contact">Être rappelé</a>
+        <a class="btn btn-ghost btn-sm" data-contact-mail href="#contact">Me contacter</a>
         <a class="btn btn-primary btn-sm" href="app.html?demo=1">Essayer la démo</a>
       </div>
     </div>
@@ -640,16 +640,19 @@
   <script>
     // ===== VOS COORDONNÉES : à modifier ici =====
     const CONTACT = {
-      nom: 'Votre nom',
-      telephone: '06 00 00 00 00',
-      email: 'votre.email@exemple.fr',
+      nom: 'Louis Bauquet-Lancea',
+      telephone: '', // laisser vide pour ne pas afficher de téléphone
+      email: 'louis.lanquet@gmail.com',
     };
     // ============================================
     const mailto = 'mailto:' + CONTACT.email + '?subject=' + encodeURIComponent('Démonstration Ardoise') +
       '&body=' + encodeURIComponent("Bonjour,\n\nJe souhaiterais une démonstration d'Ardoise.\n\nMon commerce :\nMon téléphone :\n\nMerci !");
     document.querySelectorAll('[data-contact-mail]').forEach((a) => { if (a.getAttribute('href') === '#') a.href = mailto; });
     document.querySelectorAll('[data-contact-mail-text]').forEach((a) => { a.href = mailto; a.textContent = CONTACT.email; });
-    document.querySelectorAll('[data-contact-tel]').forEach((a) => { a.href = 'tel:' + CONTACT.telephone.replace(/\s/g, ''); a.textContent = CONTACT.telephone; });
+    document.querySelectorAll('[data-contact-tel]').forEach((a) => {
+      if (!CONTACT.telephone) { a.previousSibling && a.previousSibling.nodeType === 3 && (a.previousSibling.textContent = ' '); a.remove(); return; }
+      a.href = 'tel:' + CONTACT.telephone.replace(/\s/g, ''); a.textContent = CONTACT.telephone;
+    });
     document.querySelectorAll('[data-contact-name]').forEach((s) => { s.textContent = CONTACT.nom; });
     document.getElementById('year').textContent = new Date().getFullYear();
 
