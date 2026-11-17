@@ -48,6 +48,7 @@ Le dépôt se déploie tel quel sur Vercel, sans build (Framework Preset : *Othe
 - **Sauvegarde et restauration**, avec un rappel si la dernière sauvegarde date de plus de 7 jours.
 - **Sauvegarde automatique dans Google Drive** (version en ligne) : connexion Google, accès limité aux seuls fichiers d'Ardoise (`drive.file`), un fichier par jour, restauration en un clic. Mise en service : [`docs/google-drive.md`](docs/google-drive.md).
 - **Exemple de démonstration** (une cidrerie), pour les présentations.
+- **Licences** : sans clé, mode démonstration (PDF filigranés « DÉMONSTRATION », pas de Factur-X) ; avec la clé du client (signée, liée à son SIREN), tout est débloqué. Les clés se créent dans l'**espace administrateur** `admin.html`, avec un compte par associé. Mode d'emploi : [`docs/licences.md`](docs/licences.md).
 
 ## Facture électronique : ce qui est vérifié
 

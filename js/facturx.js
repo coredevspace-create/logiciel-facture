@@ -237,7 +237,9 @@ function pdfReady() {
   return !!(window.PDFLib && window.fontkit && window.ARDOISE_ASSETS);
 }
 
-const isFacturX = (doc) => doc.kind !== 'quote' && doc.status === 'issued';
+// Sans licence active (mode démonstration), pas de Factur-X : seulement un PDF filigrané.
+const licensed = () => typeof isLicensed === 'function' && isLicensed();
+const isFacturX = (doc) => doc.kind !== 'quote' && doc.status === 'issued' && licensed();
 
 async function buildPdf(doc) {
   const { PDFDocument, rgb, degrees, PDFName, PDFString, PDFHexString } = window.PDFLib;
@@ -249,6 +251,7 @@ async function buildPdf(doc) {
   const isPro = c.type === 'pro';
   const fx = isFacturX(doc);
   const draftMark = doc.status === 'draft' && !isQuote;
+  const demoMark = !licensed();
 
   const pdf = await PDFDocument.create({ updateMetadata: false });
   pdf.registerFontkit(window.fontkit);
@@ -302,7 +305,9 @@ async function buildPdf(doc) {
   const newPage = () => {
     page = pdf.addPage([W, H]);
     y = H - M;
-    if (draftMark) {
+    if (demoMark) {
+      page.drawText('DÉMONSTRATION', { x: 78, y: 236, size: 66, font: B, color: C.mark, rotate: degrees(32) });
+    } else if (draftMark) {
       page.drawText('BROUILLON', { x: 120, y: 300, size: 92, font: B, color: C.mark, rotate: degrees(32) });
     }
   };
@@ -505,6 +510,7 @@ async function buildPdf(doc) {
     for (const l of footLines) { text(l, W / 2, fy, { size: 7, color: C.muted, align: 'center' }); fy -= 9; }
     if (pages.length > 1) text(`Page ${i + 1} / ${pages.length}`, W - M, 20, { size: 7, color: C.muted, align: 'right' });
     if (fx && i === 0) text('Facture électronique Factur-X (EN 16931)', M, 20, { size: 6.5, color: C.muted });
+    if (demoMark) text(`Document créé avec la version de démonstration d'${APP.name} : non valable comme facture.`, M, 20, { size: 7, font: B, color: rgb(0.85, 0.2, 0.25) });
   });
 
   /* ---- Métadonnées, PDF/A-3 et pièce jointe Factur-X ---- */
@@ -645,6 +651,7 @@ async function downloadPdf(doc) {
 }
 
 function downloadXml(doc) {
+  if (!isFacturX(doc)) { toast('Activez votre licence (Mon entreprise) pour obtenir le XML Factur-X.', 'error'); return; }
   download(pdfFilename(doc, 'xml').replace(/\.xml$/, '_factur-x.xml'), buildCII(doc), 'application/xml');
   toast('XML Factur-X téléchargé');
 }

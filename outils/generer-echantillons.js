@@ -17,6 +17,8 @@ fs.mkdirSync(OUT, { recursive: true });
   await page.reload();
   await page.click('[data-act="demo"]');
   await page.waitForTimeout(200);
+  // Les Factur-X ne sont produites qu'avec une licence active : on la simule pour les tests.
+  await page.evaluate(() => { window.licenceState = () => 'valid'; });
 
   const results = await page.evaluate(async () => {
     const out = [];

@@ -36,7 +36,7 @@ Reprends ensuite **ses propres mots** dans la démonstration : « Vous m'avez di
 
 ## 4. La démonstration en 5 minutes
 
-Prépare-la avant le rendez-vous : ouvre `Ardoise.html`, puis **Mon entreprise → Charger l'exemple de démonstration**. L'exemple est une cidrerie, adapte ton discours au métier du client.
+Prépare-la avant le rendez-vous : ouvre `Ardoise.html` (ou `ton-site/app.html?demo=1`), puis **Mon entreprise → Charger l'exemple de démonstration**. Sans licence, les PDF portent la mention « DÉMONSTRATION » : c'est normal, et ça montre au prospect ce que débloque l'achat. L'exemple est une cidrerie, adapte ton discours au métier du client.
 
 1. **Tableau de bord** (30 s) : « En un coup d'œil : ce que vous avez facturé ce mois-ci, ce qu'on vous doit, et en rouge les retards. »
 2. **Créer une facture** (1 min 30) : clique sur *+ Facture*, choisis un client, tape « cidre » → l'article s'ajoute avec son prix. Change une quantité. « C'est tout. »
@@ -97,6 +97,7 @@ Sur place :
 - [ ] Faire une **sauvegarde** sur sa clé USB, et la mettre dans un rappel de son téléphone (« tous les vendredis »).
 - [ ] Laisser le **guide rapide** imprimé (`guide-client.pdf`).
 - [ ] Faire signer le **bon de commande** et encaisser.
+- [ ] **Activer la licence** : dans `admin.html`, créer la licence (nom et SIRET du client), puis la coller chez lui dans *Mon entreprise → Licence → Activer*. Le filigrane « DÉMONSTRATION » disparaît. Détails dans `docs/licences.md`.
 
 ## 8. Après la vente
 

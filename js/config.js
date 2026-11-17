@@ -7,4 +7,6 @@
  */
 window.ARDOISE_CONFIG = {
   googleClientId: '',
+  // Adresse affichée aux utilisateurs en mode démonstration pour acheter une licence
+  contactEmail: 'louis.lanquet@gmail.com',
 };

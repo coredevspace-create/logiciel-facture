@@ -45,6 +45,7 @@ function defaultData() {
     products: [],
     documents: [],
     lastBackup: null,
+    licence: '', // clé de licence (voir licenceState)
     drive: null, // connexion Google Drive (voir js/drive.js)
   };
 }
@@ -290,6 +291,98 @@ function monthlySeries(nMonths = 12) {
   return series;
 }
 
+
+/* =====================================================================
+   Licence
+   - Sans licence : mode démonstration (tout est utilisable, mais les PDF
+     portent la mention « DÉMONSTRATION » et ne sont pas des Factur-X).
+   - La clé (ARD1.<données>.<signature>) est signée par l'éditeur (page admin.html)
+     avec une clé privée ECDSA P-256 ; le logiciel ne contient que la clé publique
+     (js/licence-config.js) et vérifie que le SIREN de la licence est celui de l'entreprise.
+   ===================================================================== */
+const licenceCache = { key: null, info: null };
+
+function b64urlToBytes(s) {
+  s = String(s).replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  const bin = atob(s);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function verifyLicenceKey(key) {
+  const m = String(key || '').replace(/\s+/g, '').match(/^ARD1\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)$/);
+  const keys = (window.ARDOISE_LICENCE && window.ARDOISE_LICENCE.publicKeys) || [];
+  if (!m || !keys.length || !(window.crypto && crypto.subtle)) return null;
+  const data = new TextEncoder().encode('ARD1.' + m[1]);
+  const sig = b64urlToBytes(m[2]);
+  for (const jwk of keys) {
+    try {
+      const pk = await crypto.subtle.importKey('jwk', { kty: 'EC', crv: 'P-256', x: jwk.x, y: jwk.y }, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+      if (await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, pk, sig, data)) {
+        const info = JSON.parse(new TextDecoder().decode(b64urlToBytes(m[1])));
+        if (info && /^\d{9}$/.test(info.s)) return info;
+      }
+    } catch (e) { /* clé suivante */ }
+  }
+  return null;
+}
+
+const settingsSiren = () => String(DB.settings.siret || '').replace(/\s/g, '').slice(0, 9);
+
+function licenceState() {
+  if (!DB.licence) return 'demo';
+  if (licenceCache.key !== DB.licence) return 'pending';
+  if (!licenceCache.info) return 'invalid';
+  if (!/^\d{9}$/.test(settingsSiren())) return 'nosiret';
+  return settingsSiren() === licenceCache.info.s ? 'valid' : 'mismatch';
+}
+const isLicensed = () => licenceState() === 'valid';
+
+async function verifyStoredLicence() {
+  const key = DB.licence;
+  if (!key || licenceCache.key === key) return;
+  const info = await verifyLicenceKey(key);
+  licenceCache.key = key;
+  licenceCache.info = info;
+}
+
+function renderLicenceBadge() {
+  const el = $('#licence-badge');
+  if (el) el.hidden = isLicensed();
+}
+
+function licenceCardHTML() {
+  const st = licenceState();
+  const i = licenceCache.info || {};
+  const contact = ((window.ARDOISE_CONFIG || {}).contactEmail || '').trim();
+  const buy = contact ? `<p class="muted small">Pas encore de licence ? Écrivez à <a href="mailto:${esc(contact)}?subject=${encodeURIComponent('Licence ' + APP.name)}">${esc(contact)}</a>.</p>` : '';
+  const form = (value = '') => `
+    <label>Clé de licence <textarea id="lic-key" rows="3" placeholder="Collez ici la clé reçue par e-mail (elle commence par ARD1.)" spellcheck="false" style="font-family:monospace;font-size:12.5px">${esc(value)}</textarea></label>
+    <div class="actions" style="margin-top:10px"><button class="btn primary" data-act="lic-activate">Activer la licence</button>${value ? '<button class="btn danger" data-act="lic-remove">Retirer la clé</button>' : ''}</div>`;
+  let body;
+  if (st === 'valid') {
+    body = `<p><span class="up strong">✔ Licence active</span></p>
+      <ul class="drive-status">
+        <li><span class="muted">Établie pour</span><span class="strong">${esc(i.n || '')}</span></li>
+        <li><span class="muted">SIREN</span><span>${esc(i.s)}</span></li>
+        <li><span class="muted">N° de licence</span><span>${esc(i.id || '')}</span></li>
+        <li><span class="muted">Délivrée le</span><span>${i.d ? fmtDate(i.d) : ''}</span></li>
+      </ul>
+      <div class="actions" style="margin-top:10px"><button class="btn small danger" data-act="lic-remove">Retirer la licence de cet ordinateur</button></div>`;
+  } else if (st === 'nosiret') {
+    body = `<div class="alert-box warn">Licence valide pour <b>${esc(i.n || '')}</b> (SIREN ${esc(i.s)}). Renseignez votre <b>SIRET</b> ci-dessous puis cliquez sur « Enregistrer » pour l'activer.</div>`;
+  } else if (st === 'mismatch') {
+    body = `<div class="alert-box warn">Cette licence est établie pour le SIREN <b>${esc(i.s)}</b> (${esc(i.n || '')}), mais le SIRET de votre entreprise commence par <b>${esc(settingsSiren())}</b>. Vérifiez votre SIRET ou demandez une licence à votre nom.</div>${form(DB.licence)}${buy}`;
+  } else if (st === 'invalid') {
+    body = `<div class="alert-box warn">Cette clé de licence n'est pas valide. Vérifiez qu'elle a été copiée en entier, sans espace ni retour à la ligne.</div>${form(DB.licence)}${buy}`;
+  } else {
+    body = `<p class="small">Vous utilisez <b>la version de démonstration</b> : vous pouvez tout essayer, mais les documents PDF portent la mention <b>« DÉMONSTRATION »</b> et ne sont pas des factures électroniques valables.</p>${form()}${buy}`;
+  }
+  return `<div class="card" id="licence-card"><h2>🔑 Licence</h2>${body}</div>`;
+}
+
 /* =====================================================================
    Modale
    ===================================================================== */
@@ -317,6 +410,8 @@ function go(hash) {
 function router() {
   const parts = location.hash.replace(/^#\/?/, '').split('/');
   const [route, a, b] = parts;
+  if (licenceState() === 'pending') { verifyStoredLicence().then(router); return; }
+  renderLicenceBadge();
   closeModal();
   actions = {};
   $$('#nav a').forEach((el) => {
@@ -944,7 +1039,7 @@ function renderView(id) {
           </ul>
         </div>
 
-        ${isFacturX(d) ? facturxCard(d) : ''}
+        ${isFacturX(d) ? facturxCard(d) : (!isLicensed() && d.kind !== 'quote' ? `<div class="card"><h3>Mode démonstration</h3><p class="small muted">Les PDF portent la mention « DÉMONSTRATION » et ne sont pas des factures électroniques. <a href="#/parametres">Activer ma licence</a></p></div>` : '')}
 
         ${isQuote ? `<div class="card"><h3>Suivi du devis</h3>
           ${toInvoice ? `<p class="small">Transformé en <a href="#/doc/${toInvoice.id}">${esc(toInvoice.number || 'facture brouillon')}</a>.</p>` : ''}
@@ -1052,7 +1147,7 @@ function renderPaper(d) {
   ].filter(Boolean).join(' · ');
 
   return `<div class="paper" id="paper">
-    ${d.status === 'draft' && !isQuote ? '<div class="watermark">BROUILLON</div>' : ''}
+    ${!isLicensed() ? '<div class="watermark demo">DÉMONSTRATION</div>' : d.status === 'draft' && !isQuote ? '<div class="watermark">BROUILLON</div>' : ''}
     <div class="p-head">
       <div class="p-seller">
         ${logo ? `<img class="p-logo" src="${logo}" alt="">` : ''}
@@ -1435,6 +1530,8 @@ function renderSettings() {
   $('#main').innerHTML = `
     <div class="page-head"><h1>Mon entreprise</h1><div class="actions"><button class="btn primary" data-act="save">Enregistrer</button></div></div>
 
+    ${licenceCardHTML()}
+
     <div class="card"><h2>Identité</h2>
       <div class="grid3">
         ${f('name', "Nom de l'entreprise *", { cls: 'span2', ph: 'ex : Cidrerie du Verger' })}
@@ -1516,7 +1613,27 @@ function renderSettings() {
   });
 
   actions = {
-    save: () => { saveSettingsForm(); save(); toast('Paramètres enregistrés'); renderTicker(); },
+    save: () => { saveSettingsForm(); save(); toast('Paramètres enregistrés'); renderTicker(); renderLicenceBadge(); renderSettings(); },
+    'lic-activate': async () => {
+      const key = ($('#lic-key').value || '').replace(/\s+/g, '');
+      if (!key) { toast('Collez votre clé de licence.', 'error'); return; }
+      saveSettingsForm();
+      DB.licence = key;
+      save();
+      await verifyStoredLicence();
+      const st = licenceState();
+      toast(st === 'valid' ? 'Licence activée. Merci !' : st === 'nosiret' ? 'Clé valide : renseignez votre SIRET pour terminer.' : st === 'mismatch' ? 'Cette licence correspond à un autre SIREN.' : 'Clé de licence non valide.', st === 'valid' || st === 'nosiret' ? '' : 'error');
+      renderLicenceBadge();
+      renderSettings();
+    },
+    'lic-remove': () => {
+      if (!confirm('Retirer la clé de licence de cet ordinateur ?\n\nArdoise repassera en mode démonstration.')) return;
+      saveSettingsForm();
+      DB.licence = '';
+      save();
+      renderLicenceBadge();
+      renderSettings();
+    },
     'del-logo': () => { saveSettingsForm(); DB.settings.logo = ''; save(); renderSettings(); },
     demo: () => loadDemo(),
     reset: () => {
